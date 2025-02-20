@@ -41,7 +41,7 @@ export const AuthPage = () => {
           />
         </div>
 
-        <Button type="submit" className="mt-4 justify-self-end">
+        <Button type="submit" color="primary" className="mt-4 justify-self-end">
           Submit
         </Button>
 

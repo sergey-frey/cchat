@@ -1,9 +1,0 @@
-{
-  "ui": "src\\shared\\ui",
-  "utils": "src/shared/utils",
-  "gray": "zinc",
-  "css": "src/app/ui.css",
-  "alias": "@",
-  "language": "typescript",
-  "$schema": "https://getjustd.com/schema.json"
-}

@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  client:
+    build:
+      # Поскольку docker-compose не в корне client,
+      # нужно указать context с путём до client относительно docker-compose
+      context: ../client
+      # Путь до Dockerfile здесь указывается относительно context
+      dockerfile: ../dev-config/Dockerfile.client
+    ports:
+      - "5173:5173"
+
+    volumes:
+      # Связываем локальную директорию с директорией в контейнере для hot reload'а
+      - ../client:/usr/app
+
+      # Решение проблемы Error: Cannot find module @rollup/rollup-linux-x64-gnu
+      # https://stackoverflow.com/questions/78336694/error-cannot-find-module-rollup-rollup-linux-x64-musl-on-docker-container
+      - node_modules:/usr/app/node_modules
+
+# Решение проблемы Error: Cannot find module @rollup/rollup-linux-x64-gnu
+# https://stackoverflow.com/questions/78336694/error-cannot-find-module-rollup-rollup-linux-x64-musl-on-docker-container
+volumes:
+  node_modules: {}

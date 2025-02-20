@@ -6,6 +6,9 @@ import react from "@vitejs/plugin-react-swc";
 export default defineConfig({
   server: {
     host: true,
+    watch: {
+      usePolling: true,
+    },
   },
   resolve: {
     alias: {

@@ -13,7 +13,7 @@ import { Providers } from "./providers";
 export const App = () => {
   return (
     <Providers>
-      <main className="main">
+      <main className="main max-w-[800px] mx-auto w-full">
         <Switch>
           <UnauthorizedRoute
             path="/auth"

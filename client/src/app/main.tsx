@@ -4,8 +4,19 @@ import { App } from "./app";
 
 import "./global.css";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+async function enableMocking() {
+  if (import.meta.env.MODE !== "development") {
+    return;
+  }
+
+  const { worker } = await import("@/shared/api/mocks/browser");
+  return worker.start();
+}
+
+enableMocking().then(() => {
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+});

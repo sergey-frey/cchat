@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   client:
     build:
@@ -14,12 +12,9 @@ services:
     volumes:
       # Связываем локальную директорию с директорией в контейнере для hot reload'а
       - ../client:/usr/app
+      - /usr/app/node_modules
 
-      # Решение проблемы Error: Cannot find module @rollup/rollup-linux-x64-gnu
-      # https://stackoverflow.com/questions/78336694/error-cannot-find-module-rollup-rollup-linux-x64-musl-on-docker-container
-      - node_modules:/usr/app/node_modules
+    environment:
+      - MODE=develop
 
-# Решение проблемы Error: Cannot find module @rollup/rollup-linux-x64-gnu
-# https://stackoverflow.com/questions/78336694/error-cannot-find-module-rollup-rollup-linux-x64-musl-on-docker-container
-volumes:
-  node_modules: {}
+    command: bash -c "npm install && npm run dev"

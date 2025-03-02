@@ -1,0 +1,15 @@
+env: 'local'
+
+token_ttl: 1h
+
+db:
+  username: 'postgres'
+  host: 'localhost'
+  port: '5443'
+  dbname: 'postgres'
+  sslmode: 'disable'
+
+http_server:
+  server_port: 'localhost:8040'
+  timeout: 4s
+  idle_timeout: 60s

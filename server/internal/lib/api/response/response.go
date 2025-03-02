@@ -1,0 +1,39 @@
+package response
+
+import (
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/go-playground/validator/v10"
+)
+
+type Response struct {
+	Status int `json:"status"`
+	Error string `json:"error,omitempty"`
+	Data interface{} `json:"data,omitempty"`
+}
+
+func ValidationError(errs validator.ValidationErrors) Response {
+	var errMsgs []string
+
+	for _, err := range errs {
+		switch err.ActualTag() {
+		case "required":
+			errMsgs = append(errMsgs, fmt.Sprintf("field %s is a required field", err.Field()))
+		// case "email":
+		// 	errMsgs = append(errMsgs, fmt.Sprintf("field %s is not a valid email", err.Field()))
+		// case "min":
+		// 	errMsgs = append(errMsgs, fmt.Sprintf("field %s must have more than %s chars", err.Field(), err.Param()))
+		// case "uppercase":
+		// 	errMsgs = append(errMsgs, fmt.Sprintf("field %s must contain a capital letter", err.Field()))
+		default:
+			errMsgs = append(errMsgs, fmt.Sprintf("field %s is not valid", err.Field()))
+		}
+	}
+
+	return Response{
+		Status: http.StatusBadRequest,
+		Error: strings.Join(errMsgs, ", "),
+	}
+}

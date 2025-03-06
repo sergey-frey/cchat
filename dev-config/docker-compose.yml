@@ -18,3 +18,21 @@ services:
       - MODE=develop
 
     command: bash -c "npm install && npm run dev"
+  cchat-server-app:
+    build:
+      context: ../server
+      dockerfile: "../dev-config/Dockerfile.server"
+    command: ./wait-for-postgres.sh psql ./cchat-server-app
+    ports:
+      - 8040:8040
+    depends_on:
+      - psql
+    environment:
+      - DB_PASSWORD=qwerty
+  psql:
+    restart: always
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=qwerty
+    ports:
+      - 5443:5432

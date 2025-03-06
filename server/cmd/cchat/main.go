@@ -18,8 +18,16 @@ import (
 
 	authHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/auth"
 	"github.com/sergey-frey/cchat/internal/http-server/handlers/session"
+	//"github.com/sergey-frey/cchat/internal/http-server/middleware/logger"
 	"github.com/sergey-frey/cchat/internal/lib/logger/slogpretty"
 )
+
+// @title Cchat App API
+// @version 0.1
+// @description API Server for Cchat application
+
+// @host localhost:8040
+// @BasePath /cchat
 
 const (
 	envLocal = "local"
@@ -34,14 +42,14 @@ func main() {
 
 	log.Info("starting application")
 
-	storagePath := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", cfg.Storage.Host, cfg.Storage.Port, cfg.Storage.Username, cfg.Storage.DBName, os.Getenv("DB_PASSWORD"), cfg.Storage.SSLMode)
-
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
 	router.Use()
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
+
+	storagePath := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", cfg.Storage.Host, cfg.Storage.Port, cfg.Storage.Username, cfg.Storage.DBName, os.Getenv("DB_PASSWORD"), cfg.Storage.SSLMode)
 
 	pool, err := postgres.New(context.Background(), storagePath)
 	if err != nil {

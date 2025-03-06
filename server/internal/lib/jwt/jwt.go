@@ -10,8 +10,8 @@ import (
 
 
 const (
-	accessDuration = 10 * time.Second
-	refreshDuration = 30 * time.Second
+	accessDuration = 15 * time.Minute
+	refreshDuration =  43200 * time.Second
 )
 
 var (

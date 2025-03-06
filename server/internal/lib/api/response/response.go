@@ -9,9 +9,9 @@ import (
 )
 
 type Response struct {
-	Status int `json:"status"`
-	Error string `json:"error,omitempty"`
-	Data interface{} `json:"data,omitempty"`
+	Status int    `json:"status"`
+	Error  string `json:"error,omitempty"`
+	Data   any    `json:"data,omitempty"`
 }
 
 func ValidationError(errs validator.ValidationErrors) Response {
@@ -34,6 +34,6 @@ func ValidationError(errs validator.ValidationErrors) Response {
 
 	return Response{
 		Status: http.StatusBadRequest,
-		Error: strings.Join(errMsgs, ", "),
+		Error:  strings.Join(errMsgs, ", "),
 	}
 }

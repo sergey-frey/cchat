@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"time"
-
 	"github.com/sergey-frey/cchat/internal/domain/models"
 	"github.com/sergey-frey/cchat/internal/lib/jwt"
 	"github.com/sergey-frey/cchat/internal/lib/logger/sl"
@@ -45,46 +43,46 @@ func New(userSaver UserSaver, log *slog.Logger, userProvider UserProvider) *Auth
 }
 
 
-func (a *AuthService) Login(ctx context.Context, email string, password string) (models.NormalizedUser, string, error) {
+func (a *AuthService) Login(ctx context.Context, loginUser models.LoginUser) (models.NormalizedUser, string, string, error) {
 	const op = "auth.Login"
 
 	log := a.log.With(
 		slog.String("op", op),
-		slog.String("email", email), //("username", email)
+		slog.String("email", loginUser.Email), //("username", email)
 	)
 
 	log.Info("attempting to login user")
 
-	user, err := a.usrProvider.User(ctx, email)
+	user, err := a.usrProvider.User(ctx, loginUser.Email)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			log.Warn("user not found", sl.Err(err))
 
-			return models.NormalizedUser{}, "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+			return models.NormalizedUser{}, "", "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 		}
 
 		log.Error("failed to get user", sl.Err(err))
 
-		return models.NormalizedUser{}, "", fmt.Errorf("%s: %w", op, err)
+		return models.NormalizedUser{}, "", "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(loginUser.Password)); err != nil {
 		log.Warn("invalid credentials", sl.Err(err))
-		return models.NormalizedUser{}, "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+		return models.NormalizedUser{}, "", "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 	}
 
 	log.Info("user logged in successfully")
 
-	token, err := jwt.NewToken(user, 2 * time.Minute)
+	accessToken, refreshToken, err := jwt.NewPairTokens(user)
 	if err != nil {
-		log.Error("failed to generate token", sl.Err(err))
+		log.Error("failed to generate tokens", sl.Err(err))
 
-		return models.NormalizedUser{}, "", fmt.Errorf("%s: %w", op, err)
+		return models.NormalizedUser{}, "", "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	normalUser := UserToNormalized(user)
 
-	return normalUser, token, nil
+	return normalUser, accessToken, refreshToken, err
 }
 
 

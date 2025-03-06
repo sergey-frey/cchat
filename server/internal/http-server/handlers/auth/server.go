@@ -22,19 +22,19 @@ import (
 )
 
 type Auth interface {
-	Login(ctx context.Context, email string, password string) (user models.NormalizedUser, token string, err error)
+	Login(ctx context.Context, loginUser models.LoginUser) (user models.NormalizedUser, accessToken string, refreshToken string, err error)
 	RegisterNewUser(ctx context.Context, username string, email string, password string) (user models.NormalizedUser, err error)
 }
 
 type AuthHandler struct {
 	auth Auth
-	log *slog.Logger
+	log  *slog.Logger
 }
 
 func New(auth Auth, log *slog.Logger) *AuthHandler {
 	return &AuthHandler{
 		auth: auth,
-		log: log,
+		log:  log,
 	}
 }
 
@@ -56,7 +56,7 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusConflict,
-					Error: "empty request",
+					Error:  "empty request",
 				})
 
 				return
@@ -65,14 +65,14 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 			log.Error("failed to decode request")
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusBadRequest,
-				Error: "failed to decode request",
+				Error:  "failed to decode request",
 			})
 			return
 		}
 
 		if err := validator.New().Struct(req); err != nil {
 			validateErr := err.(validator.ValidationErrors)
-			
+
 			log.Error("invalid request", sl.Err(err))
 
 			render.JSON(w, r, resp.ValidationError(validateErr))
@@ -80,31 +80,30 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		user, token, err := a.auth.Login(ctx, req.Email, req.Password)
+		user, accessToken, refreshToken, err := a.auth.Login(ctx, req)
 
 		if err != nil {
 			if errors.Is(err, auth.ErrInvalidCredentials) {
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusConflict,
-					Error: "invalid email or password",
+					Error:  "invalid email or password",
 				})
 				return
 			}
 
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusInternalServerError,
-				Error: "internal error",
+				Error:  "internal error",
 			})
 			return
 		}
 
-		cookie.SetCookie(w, token)
+		cookie.SetCookie(w, accessToken, refreshToken)
 
 		render.JSON(w, r, resp.Response{
 			Status: http.StatusOK,
-			Data: user,
+			Data:   user,
 		})
-		return
 	}
 }
 
@@ -120,14 +119,14 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 		var req models.RegisterUser
 
 		err := render.Decode(r, &req)
-		
+
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				log.Error("request body is empty")
 
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusConflict,
-					Error: "empty request",
+					Error:  "empty request",
 				})
 
 				return
@@ -135,14 +134,14 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 			log.Error("failed to decode request")
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusBadRequest,
-				Error: "failed to decode request",
+				Error:  "failed to decode request",
 			})
 			return
 		}
 
 		if err := validator.New().Struct(req); err != nil {
 			validateErr := err.(validator.ValidationErrors)
-			
+
 			log.Error("invalid request", sl.Err(err))
 
 			render.JSON(w, r, resp.ValidationError(validateErr))
@@ -155,22 +154,21 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 			if errors.Is(err, auth.ErrUserExists) {
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusConflict,
-					Error: "user already exists",
+					Error:  "user already exists",
 				})
 				return
 			}
 
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusInternalServerError,
-				Error: "internal error",
+				Error:  "internal error",
 			})
 			return
 		}
 
 		render.JSON(w, r, resp.Response{
 			Status: http.StatusOK,
-			Data: user,
+			Data:   user,
 		})
-		return
 	}
 }

@@ -13,3 +13,6 @@ http_server:
   server_port: 'localhost:8040'
   timeout: 4s
   idle_timeout: 60s
+  access_tokenTTL: 15m
+  refresh_tokenTTL: 43200m
+

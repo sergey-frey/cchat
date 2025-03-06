@@ -13,8 +13,8 @@ type Config struct {
 	Env string `yaml:"env" env-default:"local"`
 	Server HTTPServer `yaml:"http_server"`
 	Storage DataBase `yaml:"db"`
-	Clients ClientConfig `yaml:"clients"`
-	TokenTTL time.Duration `yaml:"token_ttl" env-required:"true"`
+	// TokenTTL time.Duration `yaml:"token_ttl" env-required:"true"`
+	//Clients ClientConfig `yaml:"clients"`
 	//AppSecret string `yaml:"app_secret"`
 	
 }
@@ -34,23 +34,11 @@ type DataBase struct {
   	SSLMode string `yaml:"sslmode"`
 }
 
-type Client struct {
-	Address string `yaml:"address"`
-	Timeout time.Duration `yaml:"timeout"`
-	RetriesCount int `yaml:"retriesCount"`
-	Insecure bool `yaml:"insecure"`
-}
-
-type ClientConfig struct {
-	SSO Client `yaml:"sso"`
-}
-
 func MustLoad() *Config {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("error loading env variables: %s", err.Error())
 	}
 
-	os.Setenv("CONFIG_PATH", "./config/local.yaml")
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
 		log.Fatalf("config path is not set")

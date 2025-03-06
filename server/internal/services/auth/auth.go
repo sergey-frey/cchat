@@ -48,7 +48,7 @@ func (a *AuthService) Login(ctx context.Context, loginUser models.LoginUser) (mo
 
 	log := a.log.With(
 		slog.String("op", op),
-		slog.String("email", loginUser.Email), //("username", email)
+		slog.String("email", loginUser.Email),
 	)
 
 	log.Info("attempting to login user")

@@ -4,17 +4,12 @@ import (
 	"context"
 	"errors"
 	"io"
-
-	//"io"
 	"log/slog"
 	"net/http"
-
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 	"github.com/sergey-frey/cchat/internal/domain/models"
-
-	//resp "github.com/sergey-frey/cchat/internal/lib/api/response"
 	resp "github.com/sergey-frey/cchat/internal/lib/api/response"
 	"github.com/sergey-frey/cchat/internal/lib/cookie"
 	"github.com/sergey-frey/cchat/internal/lib/logger/sl"
@@ -37,6 +32,19 @@ func New(auth Auth, log *slog.Logger) *AuthHandler {
 		log:  log,
 	}
 }
+
+// @Summary Login
+// @Tags auth
+// @Description login
+// @ID create-account
+// @Accept  json
+// @Produce  json
+// @Param input body todo.User true "account info"
+// @Success 200 {integer} integer 1
+// @Failure 400,404 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Failure default {object} errorResponse
+// @Router /auth/sign-up [post]
 
 func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +115,19 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 	}
 }
 
+// @Summary Register
+// @Tags auth
+// @Description create account
+// @ID create-account
+// @Accept  json
+// @Produce  json
+// @Param input body todo.User true "account info"
+// @Success 200 {integer} integer 1
+// @Failure 400,404 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Failure default {object} errorResponse
+// @Router /auth/sign-up [post]
+
 func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.auth.Register"
@@ -131,6 +152,7 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 
 				return
 			}
+			
 			log.Error("failed to decode request")
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusBadRequest,

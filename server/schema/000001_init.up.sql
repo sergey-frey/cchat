@@ -1,8 +1,8 @@
-CREATE TABLE chats (
+CREATE TABLE IF NOT EXISTS chats (
     "id" SERIAL PRIMARY KEY
 );
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     "id" SERIAL PRIMARY KEY,
     "username" TEXT NOT NULL UNIQUE,
     "email" TEXT NOT NULL UNIQUE,
@@ -11,7 +11,7 @@ CREATE TABLE users (
     --"socket" TEXT
 );
 
-CREATE TABLE messages (
+CREATE TABLE IF NOT EXISTS messages (
     "id" SERIAL PRIMARY KEY,
     "type" TEXT NOT NULL,
     "content" TEXT NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE messages (
     CONSTRAINT "Message_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES users ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
-CREATE TABLE _ChatToUser (
+CREATE TABLE IF NOT EXISTS _ChatToUser (
     "A" INT NOT NULL,
     "B" INT NOT NULL,
     CONSTRAINT "_ChatToUser_A_fkey" FOREIGN KEY ("A") REFERENCES chats ("id") ON DELETE CASCADE ON UPDATE CASCADE,

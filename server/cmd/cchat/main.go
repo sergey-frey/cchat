@@ -18,7 +18,10 @@ import (
 
 	authHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/auth"
 	"github.com/sergey-frey/cchat/internal/http-server/handlers/session"
+	"github.com/sergey-frey/cchat/internal/http-server/middleware/cors"
+
 	//"github.com/sergey-frey/cchat/internal/http-server/middleware/logger"
+	"github.com/sergey-frey/cchat/cmd/migrator"
 	"github.com/sergey-frey/cchat/internal/lib/logger/slogpretty"
 )
 
@@ -45,7 +48,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
-	router.Use()
+	router.Use(cors.New())
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
@@ -57,6 +60,12 @@ func main() {
 	}
 	service := authService.New(pool, log, pool)
 	handler := authHandler.New(service, log)
+
+	migrator.NewMigration("postgres://postgres:qwerty@psql:5432/postgres?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
+
+	// router.Get("/swagger/*", httpSwagger.Handler(
+	// 	httpSwagger.URL("http://localhost:1323/swagger/doc.json"), //The url pointing to API definition
+	// ))
 
 	router.Route("/cchat/auth", func(r chi.Router) {
 		r.Post("/login", handler.Login(context.Background()))

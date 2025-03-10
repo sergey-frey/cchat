@@ -23,3 +23,11 @@ type NormalizedUser struct {
 	Username string
 	Email string
 }
+
+func UserToNormalized(user User) NormalizedUser {
+	return NormalizedUser{
+		ID: user.ID,
+		Username: user.Username,
+		Email: user.Email,
+	}
+}

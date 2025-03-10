@@ -39,12 +39,12 @@ func New(auth Auth, log *slog.Logger) *AuthHandler {
 // @ID create-account
 // @Accept  json
 // @Produce  json
-// @Param input body todo.User true "account info"
-// @Success 200 {integer} integer 1
-// @Failure 400,404 {object} errorResponse
-// @Failure 500 {object} errorResponse
-// @Failure default {object} errorResponse
-// @Router /auth/sign-up [post]
+// @Param input body models.LoginUser true "account info"
+// @Success 200 {object} models.NormalizedUser
+// @Failure 400,404,409 {object} Response
+// @Failure 500 {object} Response
+// @Failure default {object} Response
+// @Router /cchat/auth/login [post]
 
 func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -121,12 +121,12 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 // @ID create-account
 // @Accept  json
 // @Produce  json
-// @Param input body todo.User true "account info"
-// @Success 200 {integer} integer 1
-// @Failure 400,404 {object} errorResponse
-// @Failure 500 {object} errorResponse
-// @Failure default {object} errorResponse
-// @Router /auth/sign-up [post]
+// @Param input body todo.RegisterUser true "account info"
+// @Success 200 {object} models.NormalizedUser
+// @Failure 400,404,409 {object} Response
+// @Failure 500 {object} Response
+// @Failure default {object} Response
+// @Router /cchat/auth/register [post]
 
 func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

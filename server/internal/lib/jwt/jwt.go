@@ -24,6 +24,7 @@ func NewPairTokens(user models.User) (string, string, error) {
 
 	claims := accessToken.Claims.(jwt.MapClaims)
 	claims["uid"] = user.ID
+	claims["username"] = user.Username
 	claims["email"] = user.Email
 	claims["exp"] = time.Now().Add(accessDuration).Unix()
 
@@ -47,44 +48,45 @@ func NewPairTokens(user models.User) (string, string, error) {
 }
 
 
-func VerifyAccessToken(accessToken string, refreshToken string) (string, string, bool, error) {
+func VerifyAccessToken(accessToken string, refreshToken string) (string, string, models.User, error) {
 	accesstoken, _ := jwt.Parse(accessToken, func(token *jwt.Token) (any, error) {
 		return []byte("somesecret"), nil
 	})
 
-	if !accesstoken.Valid {
-		claims := accesstoken.Claims.(jwt.MapClaims)
-		newAccessToken, newRefreshToken, flag, err := VerifyRefreshToken(claims, refreshToken)	
-		return newAccessToken, newRefreshToken, flag, err
+	claims := accesstoken.Claims.(jwt.MapClaims)
+	var user = models.User{
+		ID: int64(claims["uid"].(float64)),
+		Username: claims["username"].(string),
+		Email: claims["email"].(string),
 	}
 
-	return "", "" , true, nil 
+	if !accesstoken.Valid {
+		newAccessToken, newRefreshToken, user, err := VerifyRefreshToken(user, refreshToken)	
+		return newAccessToken, newRefreshToken, user, err
+	}
+
+	return "", "", user, nil 
 }
 
 
-func VerifyRefreshToken(claims jwt.MapClaims, refreshToken string) (string, string, bool, error) {
+func VerifyRefreshToken(user models.User, refreshToken string) (string, string, models.User, error) {
 
 	refreshtoken, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
 			return []byte("secret"), nil
 		})
 	
 	if err != nil {
-		return "", "", false, err
+		return "", "", models.User{}, err
 	}
 
 	if !refreshtoken.Valid {
-		return "", "", false, ErrUserUnauthorized
-	}
-
-	var user = models.User{
-		ID: int64(claims["uid"].(float64)),
-		Email: claims["email"].(string),
+		return "", "", models.User{}, ErrUserUnauthorized
 	}
 
 	newAccessToken, newRefreshToken, err := NewPairTokens(user)
 	if err != nil {				
-		return "", "", false, err
+		return "", "", models.User{}, err
 	}
 
-	return newAccessToken, newRefreshToken, true, nil
+	return newAccessToken, newRefreshToken, user, nil
 }

@@ -80,7 +80,7 @@ func (a *AuthService) Login(ctx context.Context, loginUser models.LoginUser) (mo
 		return models.NormalizedUser{}, "", "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	normalUser := UserToNormalized(user)
+	normalUser := models.UserToNormalized(user)
 
 	return normalUser, accessToken, refreshToken, err
 }
@@ -119,13 +119,4 @@ func (a *AuthService) RegisterNewUser(ctx context.Context, username string, emai
 	log.Info("user registered")
 
 	return user, nil
-}
-
-
-func UserToNormalized(user models.User) models.NormalizedUser {
-	return models.NormalizedUser{
-		ID: user.ID,
-		Username: user.Username,
-		Email: user.Email,
-	}
 }

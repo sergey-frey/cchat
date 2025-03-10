@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/sergey-frey/cchat/internal/domain/models"
 	"github.com/sergey-frey/cchat/internal/lib/jwt"
 )
 
@@ -29,7 +31,7 @@ func SetCookie(w http.ResponseWriter, accessToken string, refreshToken string) {
 }
 
 
-func CheckCookie(w http.ResponseWriter, r *http.Request) (bool, error) {
+func CheckCookie(w http.ResponseWriter, r *http.Request) (models.NormalizedUser, error) {
 	accessCookie, err := r.Cookie("access_token")
 	if err != nil {
 		return HandlerError(err)
@@ -42,16 +44,18 @@ func CheckCookie(w http.ResponseWriter, r *http.Request) (bool, error) {
 
 	accessToken, refreshToken := accessCookie.Value, refreshCookie.Value
 
-	accessToken, refreshToken, flag, err := jwt.VerifyAccessToken(accessToken, refreshToken)
+	accessToken, refreshToken, user, err := jwt.VerifyAccessToken(accessToken, refreshToken)
 	if err != nil {
-		return false, fmt.Errorf("error with token: %w", err)
+		return models.NormalizedUser{}, fmt.Errorf("error with token: %w", err)
 	}
 
 	if accessToken != "" {
 		SetCookie(w, accessToken, refreshToken)
 	}
+
+	normalUser := models.UserToNormalized(user)
 	
-	return flag, nil
+	return normalUser, nil
 }
 
 
@@ -78,11 +82,11 @@ func DeleteCookie(w http.ResponseWriter) {
 	http.SetCookie(w, cookie)
 }
 
-func HandlerError(err error) (bool, error) {
+func HandlerError(err error) (models.NormalizedUser, error) {
 	switch err {
 		case http.ErrNoCookie:
-			return false, http.ErrNoCookie
+			return models.NormalizedUser{}, http.ErrNoCookie
 		default:
-			return false, fmt.Errorf("server error")
+			return models.NormalizedUser{}, fmt.Errorf("server error")
 		}
 }

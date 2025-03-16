@@ -22,6 +22,8 @@ services:
     build:
       context: ../server
       dockerfile: "../dev-config/Dockerfile.server"
+    # Bash в контейнере может не распознавать wait-for-postgres.sh из-за CRLF
+    # В таком случае можно изменить формат - `dos2unix ../server/wait-for-postgres.sh`
     command: ./wait-for-postgres.sh psql ./cchat-server-app
     ports:
       - 8040:8040

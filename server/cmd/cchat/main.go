@@ -45,7 +45,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
-	router.Use(cors.SetHeaders)
+	router.Use(cors.NewCORS)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 

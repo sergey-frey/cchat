@@ -1,6 +1,7 @@
 env: "local"
 
 token_ttl: 1h
+client_domen: "http://localhost:5173"
 
 db:
   username: "postgres"

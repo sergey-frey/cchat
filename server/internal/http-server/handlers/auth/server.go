@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
@@ -62,6 +63,8 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 			if errors.Is(err, io.EOF) {
 				log.Error("request body is empty")
 
+				render.Status(r, http.StatusConflict)
+
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusConflict,
 					Error:  "empty request",
@@ -71,6 +74,9 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 			}
 
 			log.Error("failed to decode request")
+
+			render.Status(r, http.StatusBadRequest)
+
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusBadRequest,
 				Error:  "failed to decode request",
@@ -83,6 +89,8 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 
 			log.Error("invalid request", sl.Err(err))
 
+			render.Status(r, http.StatusConflict)
+
 			render.JSON(w, r, resp.ValidationError(validateErr))
 
 			return
@@ -92,12 +100,18 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 
 		if err != nil {
 			if errors.Is(err, auth.ErrInvalidCredentials) {
+
+				render.Status(r, http.StatusConflict)
+
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusConflict,
 					Error:  "invalid email or password",
 				})
+
 				return
 			}
+
+			render.Status(r, http.StatusInternalServerError)
 
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusInternalServerError,
@@ -145,6 +159,8 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 			if errors.Is(err, io.EOF) {
 				log.Error("request body is empty")
 
+				render.Status(r, http.StatusConflict)
+
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusConflict,
 					Error:  "empty request",
@@ -152,8 +168,9 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 
 				return
 			}
-			
+
 			log.Error("failed to decode request")
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusBadRequest,
 				Error:  "failed to decode request",
@@ -166,6 +183,8 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 
 			log.Error("invalid request", sl.Err(err))
 
+			render.Status(r, http.StatusConflict)
+
 			render.JSON(w, r, resp.ValidationError(validateErr))
 
 			return
@@ -174,12 +193,18 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 		user, err := a.auth.RegisterNewUser(ctx, req.Username, req.Email, req.Password)
 		if err != nil {
 			if errors.Is(err, auth.ErrUserExists) {
+
+				render.Status(r, http.StatusConflict)
+
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusConflict,
 					Error:  "user already exists",
 				})
+
 				return
 			}
+
+			render.Status(r, http.StatusInternalServerError)
 
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusInternalServerError,

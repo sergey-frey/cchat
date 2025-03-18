@@ -10,28 +10,29 @@ import (
 )
 
 type Config struct {
-	Env string `yaml:"env" env-default:"local"`
-	Server HTTPServer `yaml:"http_server"`
-	Storage DataBase `yaml:"db"`
+	Env         string     `yaml:"env" env-default:"local"`
+	ClientDomen string     `yaml:"client_domen"`
+	Server      HTTPServer `yaml:"http_server"`
+	Storage     DataBase   `yaml:"db"`
 	// TokenTTL time.Duration `yaml:"token_ttl" env-required:"true"`
 	//Clients ClientConfig `yaml:"clients"`
 	//AppSecret string `yaml:"app_secret"`
-	
+
 }
 
 type HTTPServer struct {
-	Port string `yaml:"server_port" env-default:"localhost:8040"`
-	Timeout time.Duration `yaml:"timeout" env-default:"4s"`
+	Port         string        `yaml:"server_port" env-default:"localhost:8040"`
+	Timeout      time.Duration `yaml:"timeout" env-default:"4s"`
 	Idle_timeout time.Duration `yaml:"idle_timeout" env-default:"60s"`
 }
 
 type DataBase struct {
-	Host string `yaml:"host"`
-	Port string `yaml:"port"`
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
 	Username string `yaml:"username"`
-  	Password string
-  	DBName string `yaml:"dbname"`
-  	SSLMode string `yaml:"sslmode"`
+	Password string
+	DBName   string `yaml:"dbname"`
+	SSLMode  string `yaml:"sslmode"`
 }
 
 func MustLoad() *Config {
@@ -56,4 +57,3 @@ func MustLoad() *Config {
 
 	return &cfg
 }
-

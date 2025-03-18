@@ -38,19 +38,23 @@ func CheckSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 			if errors.Is(err, http.ErrNoCookie) || errors.Is(err, jwt.ErrUserUnauthorized) {
 				log.Warn("user unauthorized", sl.Err(err))
 
+				render.Status(r, http.StatusUnauthorized)
+
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusUnauthorized,
-					Error: "user unauthorized",
+					Error:  "user unauthorized",
 				})
-
+				
 				return
 			}
 			
 			log.Error("error with check session", sl.Err(err))
+
+			render.Status(r, http.StatusInternalServerError)
+
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusInternalServerError,
-				Error: "user unauthorized",
-	
+				Error:  "user unauthorized",
 			})
 
 			return
@@ -58,7 +62,7 @@ func CheckSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 
 		render.JSON(w, r, resp.Response{
 			Status: http.StatusOK,
-			Data: user,
+			Data:   user,
 		})
 	}
 }

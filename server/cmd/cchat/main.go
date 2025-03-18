@@ -12,15 +12,12 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/sergey-frey/cchat/internal/app"
 	"github.com/sergey-frey/cchat/internal/config"
-	"github.com/sergey-frey/cchat/internal/storage/postgres"
-
-	authService "github.com/sergey-frey/cchat/internal/services/auth"
-
 	authHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/auth"
 	"github.com/sergey-frey/cchat/internal/http-server/handlers/session"
 	"github.com/sergey-frey/cchat/internal/http-server/middleware/cors"
+	authService "github.com/sergey-frey/cchat/internal/services/auth"
+	"github.com/sergey-frey/cchat/internal/storage/postgres"
 
-	//"github.com/sergey-frey/cchat/internal/http-server/middleware/logger"
 	"github.com/sergey-frey/cchat/cmd/migrator"
 	"github.com/sergey-frey/cchat/internal/lib/logger/slogpretty"
 )
@@ -34,8 +31,8 @@ import (
 
 const (
 	envLocal = "local"
-	envDev = "dev"
-	envProd = "prod"
+	envDev   = "dev"
+	envProd  = "prod"
 )
 
 func main() {
@@ -48,7 +45,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
-	router.Use(cors.New())
+	router.Use(cors.SetHeaders)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 

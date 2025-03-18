@@ -33,7 +33,7 @@ func ValidationError(errs validator.ValidationErrors) Response {
 	}
 
 	return Response{
-		Status: http.StatusBadRequest,
+		Status: http.StatusConflict,
 		Error:  strings.Join(errMsgs, ", "),
 	}
 }

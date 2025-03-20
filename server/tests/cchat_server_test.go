@@ -23,7 +23,6 @@ func TestCchatAuth_HappyPath(t *testing.T) {
 
 	e.POST("/cchat/auth/register").
 		WithJSON(models.RegisterUser{
-			Username: gofakeit.Username(),
 			Email: gofakeit.Email(),
 			Password: generateNewPassword(),
 		}).
@@ -87,7 +86,6 @@ func TestRegister_FailCases(t *testing.T) {
 
 			resp := e.POST("/cchat/auth/register").
 				WithJSON(models.RegisterUser{
-					Username: tt.username,
 					Email: tt.email,
 					Password: tt.password,
 			}).Expect().JSON().Object()

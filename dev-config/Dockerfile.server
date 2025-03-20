@@ -8,8 +8,11 @@ COPY ./ ./
 RUN apt-get update
 RUN apt-get -y install postgresql-client
 
+RUN apt-get install dos2unix
+
 #make wait-for-postgres.sh executable
 RUN chmod +x ./wait-for-postgres.sh
+RUN dos2unix ./wait-for-postgres.sh
 
 #build go app
 RUN go mod download

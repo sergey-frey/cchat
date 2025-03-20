@@ -8,7 +8,7 @@ export const useCheckAuth = () => {
   useEffect(() => {
     authService
       .checkSession()
-      .then(setUser)
+      .then((response) => setUser(response.data))
       .catch(() => setUser(null));
   }, [setUser]);
 

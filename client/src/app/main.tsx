@@ -5,7 +5,7 @@ import { App } from "./app";
 import "./global.css";
 
 async function enableMocking() {
-  if (import.meta.env.MODE !== "development") {
+  if (import.meta.env.MODE !== "mock") {
     return;
   }
 
@@ -13,10 +13,14 @@ async function enableMocking() {
   return worker.start();
 }
 
-enableMocking().then(() => {
-  createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
-});
+enableMocking()
+  .then(() => {
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+  })
+  .catch(() => {
+    console.log("Mock server failed to start");
+  });

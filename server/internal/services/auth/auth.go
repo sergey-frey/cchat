@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"github.com/sergey-frey/cchat/internal/domain/models"
 	"github.com/sergey-frey/cchat/internal/lib/jwt"
+	genusername "github.com/sergey-frey/cchat/internal/lib/username"
 	"github.com/sergey-frey/cchat/internal/lib/logger/sl"
 	"github.com/sergey-frey/cchat/internal/storage"
 	"golang.org/x/crypto/bcrypt"
@@ -86,7 +87,7 @@ func (a *AuthService) Login(ctx context.Context, loginUser models.LoginUser) (mo
 }
 
 
-func (a *AuthService) RegisterNewUser(ctx context.Context, username string, email string, pass string) (models.NormalizedUser, error) {
+func (a *AuthService) RegisterNewUser(ctx context.Context, email string, pass string) (models.NormalizedUser, error) {
 	const op = "auth.RegisterNewUser"
 
 	log := a.log.With(
@@ -102,6 +103,8 @@ func (a *AuthService) RegisterNewUser(ctx context.Context, username string, emai
 
 		return models.NormalizedUser{}, fmt.Errorf("%s: %w", op, err)
 	}
+
+	username := genusername.GenerateUsername()
 
 	user, err := a.usrSaver.SaveUser(ctx, username, email, passHash)
 	if err != nil {

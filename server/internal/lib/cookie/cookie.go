@@ -52,10 +52,8 @@ func CheckCookie(w http.ResponseWriter, r *http.Request) (models.NormalizedUser,
 	if accessToken != "" {
 		SetCookie(w, accessToken, refreshToken)
 	}
-
-	normalUser := models.UserToNormalized(user)
 	
-	return normalUser, nil
+	return user, nil
 }
 
 

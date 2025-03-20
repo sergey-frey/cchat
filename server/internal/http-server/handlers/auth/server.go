@@ -19,7 +19,7 @@ import (
 
 type Auth interface {
 	Login(ctx context.Context, loginUser models.LoginUser) (user models.NormalizedUser, accessToken string, refreshToken string, err error)
-	RegisterNewUser(ctx context.Context, email string, password string) (user models.NormalizedUser, err error)
+	RegisterNewUser(ctx context.Context, email string, password string) (user models.NormalizedUser, accessToken string, refreshToken string, err error)
 }
 
 type AuthHandler struct {
@@ -190,7 +190,7 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		user, err := a.auth.RegisterNewUser(ctx, req.Email, req.Password)
+		user, accessToken, refreshToken, err := a.auth.RegisterNewUser(ctx, req.Email, req.Password)
 		if err != nil {
 			if errors.Is(err, auth.ErrUserExists) {
 
@@ -212,6 +212,8 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 			})
 			return
 		}
+
+		cookie.SetCookie(w, accessToken, refreshToken)
 
 		render.JSON(w, r, resp.Response{
 			Status: http.StatusOK,

@@ -6,7 +6,9 @@ export const ProtectedRoute = ({ ...props }: RouteProps) => {
   const authCheckResponse = useCheckAuth();
 
   if (authCheckResponse === null) {
-    return <Redirect to={NAVIGATION.auth('login')} />;
+    return (
+      <Redirect to={NAVIGATION.auth({ searchParams: { state: "login" } })} />
+    );
   }
 
   if (authCheckResponse) {

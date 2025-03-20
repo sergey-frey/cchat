@@ -19,7 +19,7 @@ export const AuthPage = () => {
     changeFormLinkTarget,
   } = useAuthFormState();
 
-  const { onSubmit, control } = useAuthForm(formState);
+  const { onSubmit, control, isValid } = useAuthForm(formState);
 
   return (
     <section className="p-4">
@@ -39,16 +39,32 @@ export const AuthPage = () => {
             <Controller
               name="email"
               control={control}
-              render={({ field: { ...field } }) => {
-                return <Input type="text" label="Email" {...field} />;
+              render={({ field: { ...field }, formState: { errors } }) => {
+                return (
+                  <Input
+                    type="text"
+                    label="Email"
+                    isInvalid={Boolean(errors.email)}
+                    errorMessage={errors.email?.message}
+                    {...field}
+                  />
+                );
               }}
             />
 
             <Controller
               name="password"
               control={control}
-              render={({ field: { ...field } }) => {
-                return <Input type="password" label="Password" {...field} />;
+              render={({ field: { ...field }, formState: { errors } }) => {
+                return (
+                  <Input
+                    type="password"
+                    label="Password"
+                    isInvalid={Boolean(errors.password)}
+                    errorMessage={errors.password?.message}
+                    {...field}
+                  />
+                );
               }}
             />
           </div>
@@ -56,6 +72,7 @@ export const AuthPage = () => {
           <Button
             type="submit"
             color="primary"
+            isDisabled={!isValid}
             className={cn(
               "mt-4 justify-self-end mx-auto",
               "w-[80%]",

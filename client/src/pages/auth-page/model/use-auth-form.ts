@@ -12,7 +12,11 @@ const authMethodMap: Record<AuthFormState, keyof typeof authService> = {
 };
 
 export const useAuthForm = (formState: AuthFormState) => {
-  const { handleSubmit, ...rest } = useForm<AuthFormSchemaType>({
+  const {
+    handleSubmit,
+    control,
+    formState: authFormState,
+  } = useForm<AuthFormSchemaType>({
     defaultValues: {
       email: "",
       password: "",
@@ -26,10 +30,17 @@ export const useAuthForm = (formState: AuthFormState) => {
   const authMethod = authMethodMap[formState];
 
   const onSubmit = handleSubmit((data) => {
+    if (!authFormState.isValid) return;
+
     authService[authMethod](data).then(() => {
       setLocation(NAVIGATION.profile);
     });
   });
 
-  return { onSubmit, ...rest };
+  return {
+    onSubmit,
+    control,
+    errors: authFormState.errors,
+    isValid: authFormState.isValid,
+  };
 };

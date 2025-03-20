@@ -10,6 +10,8 @@ export const useLogout = () => {
   return () =>
     authService.logout().finally(() => {
       setUser(null);
-      setLocation(NAVIGATION.auth("login"), { replace: true });
+      setLocation(NAVIGATION.auth({ searchParams: { state: "login" } }), {
+        replace: true,
+      });
     });
 };

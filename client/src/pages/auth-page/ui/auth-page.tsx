@@ -39,13 +39,13 @@ export const AuthPage = () => {
             <Controller
               name="email"
               control={control}
-              render={({ field: { ...field }, formState: { errors } }) => {
+              render={({ field: { ...field }, fieldState: { error } }) => {
                 return (
                   <Input
                     type="text"
                     label="Email"
-                    isInvalid={Boolean(errors.email)}
-                    errorMessage={errors.email?.message}
+                    isInvalid={Boolean(error)}
+                    errorMessage={error?.message}
                     {...field}
                   />
                 );
@@ -55,13 +55,13 @@ export const AuthPage = () => {
             <Controller
               name="password"
               control={control}
-              render={({ field: { ...field }, formState: { errors } }) => {
+              render={({ field: { ...field }, fieldState: { error } }) => {
                 return (
                   <Input
                     type="password"
                     label="Password"
-                    isInvalid={Boolean(errors.password)}
-                    errorMessage={errors.password?.message}
+                    isInvalid={Boolean(error)}
+                    errorMessage={error?.message}
                     {...field}
                   />
                 );

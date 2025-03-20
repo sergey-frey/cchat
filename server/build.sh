@@ -1,1 +1,2 @@
-go run ./cmd/cchat/main.go
+cd ../dev-config/
+docker-compose up --build

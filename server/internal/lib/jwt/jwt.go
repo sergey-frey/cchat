@@ -19,7 +19,7 @@ var (
 )
 
 
-func NewPairTokens(user models.User) (string, string, error) {
+func NewPairTokens(user models.NormalizedUser) (string, string, error) {
 	accessToken := jwt.New(jwt.SigningMethodHS256)
 
 	claims := accessToken.Claims.(jwt.MapClaims)
@@ -48,13 +48,13 @@ func NewPairTokens(user models.User) (string, string, error) {
 }
 
 
-func VerifyAccessToken(accessToken string, refreshToken string) (string, string, models.User, error) {
+func VerifyAccessToken(accessToken string, refreshToken string) (string, string, models.NormalizedUser, error) {
 	accesstoken, _ := jwt.Parse(accessToken, func(token *jwt.Token) (any, error) {
 		return []byte("somesecret"), nil
 	})
 
 	claims := accesstoken.Claims.(jwt.MapClaims)
-	var user = models.User{
+	var user = models.NormalizedUser{
 		ID: int64(claims["uid"].(float64)),
 		Username: claims["username"].(string),
 		Email: claims["email"].(string),
@@ -69,23 +69,23 @@ func VerifyAccessToken(accessToken string, refreshToken string) (string, string,
 }
 
 
-func VerifyRefreshToken(user models.User, refreshToken string) (string, string, models.User, error) {
+func VerifyRefreshToken(user models.NormalizedUser, refreshToken string) (string, string, models.NormalizedUser, error) {
 
 	refreshtoken, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
 			return []byte("secret"), nil
 		})
 	
 	if err != nil {
-		return "", "", models.User{}, err
+		return "", "", models.NormalizedUser{}, err
 	}
 
 	if !refreshtoken.Valid {
-		return "", "", models.User{}, ErrUserUnauthorized
+		return "", "", models.NormalizedUser{}, ErrUserUnauthorized
 	}
 
 	newAccessToken, newRefreshToken, err := NewPairTokens(user)
 	if err != nil {				
-		return "", "", models.User{}, err
+		return "", "", models.NormalizedUser{}, err
 	}
 
 	return newAccessToken, newRefreshToken, user, nil

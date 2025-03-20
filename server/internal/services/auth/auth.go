@@ -74,20 +74,20 @@ func (a *AuthService) Login(ctx context.Context, loginUser models.LoginUser) (mo
 
 	log.Info("user logged in successfully")
 
-	accessToken, refreshToken, err := jwt.NewPairTokens(user)
+	normalUser := models.UserToNormalized(user)
+
+	accessToken, refreshToken, err := jwt.NewPairTokens(normalUser)
 	if err != nil {
 		log.Error("failed to generate tokens", sl.Err(err))
 
 		return models.NormalizedUser{}, "", "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	normalUser := models.UserToNormalized(user)
-
 	return normalUser, accessToken, refreshToken, err
 }
 
 
-func (a *AuthService) RegisterNewUser(ctx context.Context, email string, pass string) (models.NormalizedUser, error) {
+func (a *AuthService) RegisterNewUser(ctx context.Context, email string, pass string) (models.NormalizedUser, string, string, error) {
 	const op = "auth.RegisterNewUser"
 
 	log := a.log.With(
@@ -101,7 +101,7 @@ func (a *AuthService) RegisterNewUser(ctx context.Context, email string, pass st
 	if err != nil {
 		log.Error("failed to generate password hash", sl.Err(err))
 
-		return models.NormalizedUser{}, fmt.Errorf("%s: %w", op, err)
+		return models.NormalizedUser{}, "", "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	username := genusername.GenerateUsername()
@@ -111,15 +111,22 @@ func (a *AuthService) RegisterNewUser(ctx context.Context, email string, pass st
 		if errors.Is(err, storage.ErrUserExists) {
 			log.Warn("user already exists", sl.Err(err))
 
-			return models.NormalizedUser{}, fmt.Errorf("%s: %w", op, ErrUserExists)
+			return models.NormalizedUser{}, "", "", fmt.Errorf("%s: %w", op, ErrUserExists)
 		}
 
 		log.Error("failed to save user", sl.Err(err))
 
-		return models.NormalizedUser{}, fmt.Errorf("%s: %w", op, err)
+		return models.NormalizedUser{}, "", "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	log.Info("user registered")
 
-	return user, nil
+	accessToken, refreshToken, err := jwt.NewPairTokens(user)
+	if err != nil {
+		log.Error("failed to generate tokens", sl.Err(err))
+
+		return models.NormalizedUser{}, "", "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return user, accessToken, refreshToken, nil
 }

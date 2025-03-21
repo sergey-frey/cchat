@@ -9,6 +9,7 @@ import { CreateChatPage } from "@/pages/create-chat-page";
 import { ProfilePage } from "@/pages/profile-page";
 import { NAVIGATION } from "@/shared/navigation";
 import { Providers } from "./providers";
+import { Confirm } from "@/shared/utils/confirm";
 
 export const App = () => {
   return (
@@ -32,6 +33,8 @@ export const App = () => {
                 <Route path="/:chatId" component={ChatPage} />
               </Switch>
             </Router>
+
+            <Confirm />
           </ProtectedRouter>
         </Switch>
       </main>

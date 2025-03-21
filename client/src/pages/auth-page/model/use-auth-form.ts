@@ -16,7 +16,6 @@ export const useAuthForm = (formState: AuthFormState) => {
     handleSubmit,
     control,
     formState: authFormState,
-    getValues,
   } = useForm<AuthFormSchemaType>({
     defaultValues: {
       email: "",
@@ -26,8 +25,6 @@ export const useAuthForm = (formState: AuthFormState) => {
     mode: "onBlur",
     resolver: valibotResolver(AuthFormSchema),
   });
-
-  console.log(authFormState.errors, authFormState.isValid, getValues());
 
   const setLocation = useLocation()[1];
 

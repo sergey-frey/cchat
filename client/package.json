@@ -16,6 +16,7 @@
     "@heroui/card": "^2.2.15",
     "@heroui/divider": "^2.2.11",
     "@heroui/input": "^2.4.13",
+    "@heroui/modal": "^2.2.13",
     "@heroui/system": "^2.4.12",
     "@heroui/tabs": "^2.2.11",
     "@heroui/theme": "^2.4.12",

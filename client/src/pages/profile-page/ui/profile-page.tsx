@@ -1,6 +1,7 @@
 import { userSelector, useUserStore } from "@/entities/user";
 import { authService, useLogout } from "@/features/auth";
 import { BottomNavigation } from "@/features/navigation";
+import { useConfirm } from "@/shared/utils/confirm";
 import {
   ArrowRightStartOnRectangleIcon,
   PencilSquareIcon,
@@ -12,14 +13,17 @@ import { Divider } from "@heroui/divider";
 export const ProfilePage = () => {
   const user = useUserStore(userSelector);
   const logout = useLogout();
+  const confirm = useConfirm({
+    content: "Are you sure you want to logout?",
+  });
 
   if (!user) return null;
 
   const { username, email } = user;
 
-  const handleLogoutClick = () => {
-    authService.logout().then(logout);
-  };
+  const handleLogoutClick = confirm((closeConfirm) => {
+    authService.logout().then(logout).finally(closeConfirm);
+  });
 
   return (
     <>

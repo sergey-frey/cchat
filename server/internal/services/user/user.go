@@ -13,9 +13,9 @@ import (
 
 type UserServiceProvider interface {
 	GetUser(ctx context.Context, username string) (info *models.UserInfo, err error)
-	ChangeUsername(ctx context.Context, oldUsername string, newUsername string) (info *models.NormalizedUser, err error)
+	ChangeUsername(ctx context.Context, oldUsername string, newUsername string) (info *models.UserInfo, err error)
 	ChangeName(ctx context.Context, username string, newName string) (info *models.UserInfo, err error)
-	ChangePassword(ctx context.Context, username string, newPasswordHash []byte) (flag bool, err error)
+	ChangePassword(ctx context.Context, username string, newPasswordHash []byte) (err error)
 	GetPassword(ctx context.Context, username string) (passHash []byte, err error)
 }
 
@@ -55,99 +55,82 @@ func (u *UserDataService) GetUser(ctx context.Context, username string) (*models
 }
 
 
-func (u *UserDataService) ChangeUsername(ctx context.Context, oldUsername string, newUsername string) (*models.NormalizedUser, string, string, error) {
-	const op = "services.user.ChangeUsername"
-
-	log := u.log.With(
-		slog.String("op", op),
-		slog.String("oldUsername", oldUsername),
-		slog.String("newUsername", newUsername),
-	)
-
-	log.Info("changing username")
-
-	user, err := u.userServiceProvider.ChangeUsername(ctx, oldUsername, newUsername)
-	if err != nil {
-		log.Error("failed to change username")
-
-		return nil, "", "", fmt.Errorf("%s: %w", op, err)
-	}
-
-	accessToken, refreshToken, err := jwt.NewPairTokens(*user)
-	if err != nil {
-		log.Error("failed to generate tokens", sl.Err(err))
-
-		return nil, "", "", fmt.Errorf("%s: %w", op, err)
-	}
-
-	log.Info("username changed")
-
-	return user, accessToken, refreshToken, nil
-}
-
-
-func (u *UserDataService) ChangeName(ctx context.Context, username string, newName string) (*models.UserInfo, error) {
-	const op = "services.user.ChangeName"
+func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, newInfo models.NewUserInfo) (info *models.UserInfo, accessToken string, refreshToken string, err error) {
+	const op = "services.user.UpdateUserInfo"
 
 	log := u.log.With(
 		slog.String("op", op),
 		slog.String("username", username),
 	)
 
-	log.Info("changing name")
+	if newInfo.NewPassword != "" {
 
-	info, err := u.userServiceProvider.ChangeName(ctx, username, newName)
-	if err != nil {
-		log.Error("failed with changing name", sl.Err(err))
+		oldPassHash, err := u.userServiceProvider.GetPassword(ctx, username)
+		if err != nil {
+			log.Error("failed to get old password")
 
-		return nil, fmt.Errorf("%s: %w", op, err)
+			return nil, "", "", fmt.Errorf("%s: %w", op, err)
+		}
+
+		err = bcrypt.CompareHashAndPassword(oldPassHash, []byte(newInfo.OldPassword))
+		if err != nil {
+			log.Error("failed to compare passwords", sl.Err(err))
+
+			return nil, "", "", fmt.Errorf("%s: %w", op, err)
+		}
+
+		newPasshHash, err := bcrypt.GenerateFromPassword([]byte(newInfo.NewPassword), bcrypt.DefaultCost)
+		if err != nil {
+			log.Error("failed to generate password hash", sl.Err(err))
+
+			return nil, "", "", fmt.Errorf("%s: %w", op, err)
+		}
+
+		err = u.userServiceProvider.ChangePassword(ctx, username, newPasshHash)
+		if err != nil {
+			log.Error("failed to change password")
+
+			return nil, "", "", fmt.Errorf("%s: %w", op, err)
+		}
+
+		log.Info("password changed")
+
+		return nil, "", "", nil
 	}
+		
+	if newInfo.Username != "" {
+		info, err := u.userServiceProvider.ChangeUsername(ctx, username, newInfo.Username)
+		if err != nil {
+			log.Error("failed to change username")
 
-	log.Info("name changed")
+			return nil, "", "", fmt.Errorf("%s: %w", op, err)
+		}
 
-	return info, nil
-}
+		user := models.InfoToNormalized(info)
+		accessToken, refreshToken, err := jwt.NewPairTokens(user)
+		if err != nil {
+			log.Error("failed to generate tokens", sl.Err(err))
 
+			return nil, "", "", fmt.Errorf("%s: %w", op, err)
+		}
+		
+		log.Info("username changed")
 
-func (u *UserDataService) ChangePassword(ctx context.Context, username string, oldPassword string, newPassword string) (bool, error) {
-	const op = "services.user.ChangePassword"
-
-	log := u.log.With(
-		slog.String("op", op),
-		slog.String("username", username),
-	)
-
-	log.Info("changing password")
-
-	oldPassHash, err := u.userServiceProvider.GetPassword(ctx, username)
-	if err != nil {
-		log.Error("failed to get old password")
-
-		return false, fmt.Errorf("%s: %w", op, err)
+		return info, accessToken, refreshToken, nil
 	}
+		
+	if newInfo.Name != ""  {
+		info, err := u.userServiceProvider.ChangeName(ctx, username, newInfo.Name)
+		if err != nil {
+			log.Error("failed with changing name", sl.Err(err))
 
-	err = bcrypt.CompareHashAndPassword(oldPassHash, []byte(oldPassword))
-	if err != nil {
-		log.Error("failed to compare passwords", sl.Err(err))
+			return nil, "", "", fmt.Errorf("%s: %w", op, err)
+		}
 
-		return false, fmt.Errorf("%s: %w", op, err)
+		log.Info("name changed")
+
+		return info, "", "", nil
 	}
-
-	newPasshHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-	if err != nil {
-		log.Error("failed to generate password hash", sl.Err(err))
-
-		return false, fmt.Errorf("%s: %w", op, err)
-	}
-
-	flag, err := u.userServiceProvider.ChangePassword(ctx, username, newPasshHash)
-	if err != nil {
-		log.Error("failed to change password")
-
-		return false, fmt.Errorf("%s: %w", op, err)
-	}
-
-	log.Info("password changed")
-
-	return flag, nil
+	
+	return nil, "", "", nil
 }

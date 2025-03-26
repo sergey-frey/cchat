@@ -45,7 +45,7 @@ func (s *Storage) GetUser(ctx context.Context, username string) (*models.UserInf
 }
 
 
-func (s *Storage) ChangeUsername(ctx context.Context, oldUsername string,  newUsername string) (*models.NormalizedUser, error)  {
+func (s *Storage) ChangeUsername(ctx context.Context, oldUsername string,  newUsername string) (*models.UserInfo, error)  {
 	const op = "storage.postgres.user.ChangeUsername"
 
 	tx, err := s.pool.Begin(ctx)
@@ -66,21 +66,21 @@ func (s *Storage) ChangeUsername(ctx context.Context, oldUsername string,  newUs
 
 	}()
 
-	var user models.NormalizedUser
+	var info models.UserInfo
 
 	row := tx.QueryRow(ctx, `
 		UPDATE users
 		SET username = $1
 		WHERE username = $2
-		RETURNING email, username;
+		RETURNING id, email, username, COALESCE(name, 'nameless');
 	`, newUsername, oldUsername)
 
-	err = row.Scan(&user.Email, &user.Username)
+	err = row.Scan(&info.ID, &info.Email, &info.Username, &info.Name)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return &user, nil
+	return &info, nil
 }
 
 
@@ -110,10 +110,10 @@ func (s *Storage) ChangeName(ctx context.Context, username string, newName strin
 		UPDATE users
 		SET name = $1
 		WHERE username = $2
-		RETURNING email, username, COALESCE(name, 'nameless');
+		RETURNING id, email, username, COALESCE(name, 'nameless');
 	`, newName, username)
 
-	err = row.Scan(&info.Email, &info.Username, &info.Name)
+	err = row.Scan(&info.ID, &info.Email, &info.Username, &info.Name)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -122,12 +122,12 @@ func (s *Storage) ChangeName(ctx context.Context, username string, newName strin
 }
 
 
-func (s *Storage) ChangePassword(ctx context.Context, username string, newPasswordHash []byte) (bool, error) {
+func (s *Storage) ChangePassword(ctx context.Context, username string, newPasswordHash []byte) (error) {
 	const op = "storage.postgres.user.ChangePassword"
 
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return false, fmt.Errorf("%s: %w", op , err)
+		return fmt.Errorf("%s: %w", op , err)
 	}
 
 	defer func() {
@@ -153,21 +153,30 @@ func (s *Storage) ChangePassword(ctx context.Context, username string, newPasswo
 
 	err = row.Scan(&id)
 	if err != nil {
-		return false, fmt.Errorf("%s: %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	if id != 0 {
-		return true, nil
+		return nil
 	}
 	
-	return false, nil
+	return nil
 }
 
 
 func (s *Storage) GetPassword(ctx context.Context, username string) (password []byte, err error) {
 	const op = "storage.postgres.user.GetPassword"
 
-	row := s.pool.QueryRow(ctx, `
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op , err)
+	}
+
+	defer func() {
+		
+	}()
+
+	row := tx.QueryRow(ctx, `
 		SELECT pass_hash
 		FROM users
 		WHERE username = $1;

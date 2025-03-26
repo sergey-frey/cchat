@@ -18,9 +18,18 @@ type LoginUser struct {
 }
 
 type UserInfo struct {
-	Email    string `json:"email" db:"email"`
-	Username string `json:"username" db:"username"`
-	Name     string `json:"name" db:"name"`
+	ID       int64
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Name     string `json:"name"`
+}
+
+type NewUserInfo struct {
+	OldPassword string `json:"old_password,omitempty"`
+	NewPassword string `json:"new_password,omitempty"`
+	Email       string `json:"email,omitempty"`
+	Username    string `json:"username,omitempty"`
+	Name        string `json:"name,omitempty"`
 }
 
 type NormalizedUser struct {
@@ -34,5 +43,13 @@ func UserToNormalized(user *User) NormalizedUser {
 		ID:       user.ID,
 		Username: user.Username,
 		Email:    user.Email,
+	}
+}
+
+func InfoToNormalized(info *UserInfo) NormalizedUser{
+	return NormalizedUser{
+		ID:       info.ID,
+		Username: info.Username,
+		Email:    info.Email,
 	}
 }

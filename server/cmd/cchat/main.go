@@ -71,9 +71,7 @@ func main() {
 
 	router.With().Route("/cchat/user", func(r chi.Router) {
 		r.Get("/profile", userHandler.GetUser(context.Background()))
-		r.Put("/newusername", userHandler.ChangeUsername(context.Background()))
-		r.Put("/newname", userHandler.ChangeName(context.Background()))
-		r.Put("/newpassword", userHandler.ChangePassword(context.Background()))
+		r.Patch("/update", userHandler.UpdateUserInfo(context.Background()))
 	})
 
 	router.Route("/cchat/auth", func(r chi.Router) {

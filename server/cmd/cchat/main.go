@@ -14,8 +14,10 @@ import (
 	"github.com/sergey-frey/cchat/internal/config"
 	authHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/auth"
 	"github.com/sergey-frey/cchat/internal/http-server/handlers/session"
+	userHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/user"
 	"github.com/sergey-frey/cchat/internal/http-server/middleware/cors"
 	authService "github.com/sergey-frey/cchat/internal/services/auth"
+	userService "github.com/sergey-frey/cchat/internal/services/user"
 	"github.com/sergey-frey/cchat/internal/storage/postgres"
 
 	"github.com/sergey-frey/cchat/cmd/migrator"
@@ -55,8 +57,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	service := authService.New(pool, log, pool)
-	handler := authHandler.New(service, log)
+	authService := authService.New(pool, log, pool)
+	authHandler := authHandler.New(authService, log)
+
+	userService := userService.New(pool, log)
+	userHandler := userHandler.New(userService, log)
 
 	migrator.NewMigration("postgres://postgres:qwerty@psql:5432/postgres?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
 
@@ -64,9 +69,16 @@ func main() {
 	// 	httpSwagger.URL("http://localhost:1323/swagger/doc.json"), //The url pointing to API definition
 	// ))
 
+	router.With().Route("/cchat/user", func(r chi.Router) {
+		r.Get("/profile", userHandler.GetUser(context.Background()))
+		r.Put("/newusername", userHandler.ChangeUsername(context.Background()))
+		r.Put("/newname", userHandler.ChangeName(context.Background()))
+		r.Put("/newpassword", userHandler.ChangePassword(context.Background()))
+	})
+
 	router.Route("/cchat/auth", func(r chi.Router) {
-		r.Post("/login", handler.Login(context.Background()))
-		r.Post("/register", handler.Register(context.Background()))
+		r.Post("/login", authHandler.Login(context.Background()))
+		r.Post("/register", authHandler.Register(context.Background()))
 		r.Post("/session", session.CheckSession(context.Background(), log))
 		r.Post("/logout", session.FinishSession(context.Background(), log))
 	})

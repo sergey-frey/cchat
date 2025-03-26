@@ -11,12 +11,12 @@ import (
 	"github.com/sergey-frey/cchat/internal/storage"
 )
 
-func (s *Storage) SaveUser(ctx context.Context, username string, email string, passHash []byte) ( models.NormalizedUser, error) {
+func (s *Storage) SaveUser(ctx context.Context, username string, email string, passHash []byte) (*models.NormalizedUser, error) {
 	const op = "storage.postgres.SaveUser"
 
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return models.NormalizedUser{}, fmt.Errorf("%s: %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	defer func() {
@@ -43,22 +43,22 @@ func (s *Storage) SaveUser(ctx context.Context, username string, email string, p
 	if err != nil {
 		pgErr := err.(*pgconn.PgError)
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return models.NormalizedUser{}, fmt.Errorf("%s: %w", op, storage.ErrUserExists)
+			return nil, fmt.Errorf("%s: %w", op, storage.ErrUserExists)
 		}
 
-		return models.NormalizedUser{}, fmt.Errorf("%s: %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return user, err
+	return &user, err
 }
 
 
-func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
+func (s *Storage) User(ctx context.Context, email string) (*models.User, error) {
 	const op = "storage.postgres.User"
 
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return models.User{}, fmt.Errorf("%s: %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	defer func() {
@@ -83,11 +83,11 @@ func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
 	err = row.Scan(&user.ID, &user.Email, &user.Username, &user.PassHash)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return models.User{}, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+			return nil, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
 		}
 
-		return models.User{}, fmt.Errorf("%s: %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return user, nil
+	return &user, nil
 }

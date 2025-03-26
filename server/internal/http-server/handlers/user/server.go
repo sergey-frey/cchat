@@ -15,26 +15,20 @@ import (
 
 type UserHandlerProvider interface {
 	GetUser(ctx context.Context, username string) (info *models.UserInfo, err error)
-	ChangeUsername(ctx context.Context, oldUsername string, newUsername string) (info *models.NormalizedUser, accessToken string, refreshToken string, err error)
-	ChangeName(ctx context.Context, username string, newName string) (info *models.UserInfo, err error)
-	ChangePassword(ctx context.Context, username string, oldPassword string, newPassword string) (flag bool, err error)
+	UpdateUserInfo(ctx context.Context, username string, newInfo models.NewUserInfo) (info *models.UserInfo, accessToken string, refreshToken string, err error)
 }
 
 type UserDataHandler struct {
 	userHandlerProvider UserHandlerProvider
-	log          *slog.Logger
+	log                 *slog.Logger
 }
 
 func New(userProvider UserHandlerProvider, log *slog.Logger) *UserDataHandler {
 	return &UserDataHandler{
 		userHandlerProvider: userProvider,
-		log:          log,
+		log:                 log,
 	}
 }
-
-type newUsername struct {Username string `json:"username"`}
-type newName struct {Name string `json:"name"`}
-type newPassword struct {OldPassword string `json:"old_password"`; NewPassword string `json:"new_password"`}
 
 
 func (u *UserDataHandler) GetUser(ctx context.Context) http.HandlerFunc {
@@ -72,63 +66,20 @@ func (u *UserDataHandler) GetUser(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-func (u *UserDataHandler) ChangeUsername(ctx context.Context) http.HandlerFunc {
+
+func (u *UserDataHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.user.ChangeUsername"
+		const op = "handlers.user.UpdateUserInfo"
 
 		log := u.log.With(
 			slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		var newUsername newUsername
+		var newInfo models.NewUserInfo
 
-		err := render.Decode(r, &newUsername)
-		if flag := handlers.HandleError(w, r, newUsername, err, log); !flag {
-			return
-		}
-
-		oldUsername, err := cookie.TakeUserInfo(w, r)
-		if flag := HandleGettingCookie(w, r, err, log); !flag {
-			return
-		}
-
-		info, accessToken, refreshToken, err := u.userHandlerProvider.ChangeUsername(ctx, oldUsername, newUsername.Username)
-		if err != nil {
-			log.Error("failed to change username")
-
-			render.JSON(w, r, resp.Response{
-				Status: http.StatusBadRequest,
-				Error:  "failed to change username",
-			})
-
-			return
-		}
-
-		cookie.SetCookie(w, accessToken, refreshToken)
-
-		log.Info("password changed")
-
-		render.JSON(w, r, resp.Response{
-			Status: http.StatusOK,
-			Data:   info,
-		})
-	}
-}
-
-func (u *UserDataHandler) ChangeName(ctx context.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.user.ChangeName"
-
-		log := u.log.With(
-			slog.String("op", op),
-			slog.String("request_id", middleware.GetReqID(r.Context())),
-		)
-
-		var newName newName
-
-		err := render.Decode(r, &newName)
-		if flag := handlers.HandleError(w, r, newName, err, log); !flag {
+		err := render.Decode(r, &newInfo)
+		if flag := handlers.HandleError(w, r, newInfo, err, log); !flag {
 			return
 		}
 
@@ -137,19 +88,24 @@ func (u *UserDataHandler) ChangeName(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		info, err := u.userHandlerProvider.ChangeName(ctx, username, newName.Name)
+		info, accessToken, refreshToken, err := u.userHandlerProvider.UpdateUserInfo(ctx, username, newInfo)
+
+		if refreshToken != "" {
+			cookie.SetCookie(w, accessToken, refreshToken)
+		}
+
 		if err != nil {
-			log.Error("failed to change name")
+			log.Error("failed to update user information")
 
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusBadRequest,
-				Error:  "failed to change name",
+				Error:  "failed to update user information",
 			})
 
 			return
 		}
 
-		log.Info("name changed")
+		log.Info("information changed")
 
 		render.JSON(w, r, resp.Response{
 			Status: http.StatusOK,
@@ -158,47 +114,6 @@ func (u *UserDataHandler) ChangeName(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-func (u *UserDataHandler) ChangePassword(ctx context.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.user.ChangePassword"
-
-		log := u.log.With(
-			slog.String("op", op),
-			slog.String("request_id", middleware.GetReqID(r.Context())),
-		)
-
-		var newPassword newPassword
-
-		err := render.Decode(r, &newPassword)
-		if flag := handlers.HandleError(w, r, newPassword, err, log); !flag {
-			return
-		}
-
-		username, err := cookie.TakeUserInfo(w, r)
-		if flag := HandleGettingCookie(w, r, err, log); !flag {
-			return
-		}
-
-		info, err := u.userHandlerProvider.ChangePassword(ctx, username, newPassword.OldPassword, newPassword.NewPassword)
-		if err != nil {
-			log.Error("failed to change password")
-
-			render.JSON(w, r, resp.Response{
-				Status: http.StatusBadRequest,
-				Error:  "failed to change password",
-			})
-
-			return
-		}
-
-		log.Info("password changed")
-
-		render.JSON(w, r, resp.Response{
-			Status: http.StatusOK,
-			Data:   info,
-		})
-	}
-}
 
 func HandleGettingCookie(w http.ResponseWriter, r *http.Request, err error, log *slog.Logger) bool {
 	if err != nil {

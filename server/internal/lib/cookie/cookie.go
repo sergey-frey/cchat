@@ -10,6 +10,16 @@ import (
 )
 
 
+func TakeUserInfo(w http.ResponseWriter, r *http.Request) (string, error) {
+	user, err := CheckCookie(w, r)
+	if err != nil {
+		return "", fmt.Errorf("error with taking cookie")
+	}
+
+	return user.Username, nil
+}
+
+
 func SetCookie(w http.ResponseWriter, accessToken string, refreshToken string) {
 	cookie1 := &http.Cookie{
 		Name: "access_token",

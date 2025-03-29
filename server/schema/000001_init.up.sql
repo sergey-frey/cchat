@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS
         "id" SERIAL PRIMARY KEY,
         "username" TEXT NOT NULL UNIQUE,
         "email" TEXT NOT NULL UNIQUE,
-        "pass_hash" BYTEA NOT NULL
-        -- "name" TEXT NOT NULL 
+        "pass_hash" BYTEA NOT NULL,
+        "name" TEXT
         --"socket" TEXT
     );
 

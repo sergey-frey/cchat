@@ -2,9 +2,12 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/jackc/pgconn"
 	"github.com/sergey-frey/cchat/internal/domain/models"
+	"github.com/sergey-frey/cchat/internal/storage"
 )
 
 
@@ -31,12 +34,12 @@ func (s *Storage) GetUser(ctx context.Context, username string) (*models.UserInf
 	var info models.UserInfo
 
 	row := tx.QueryRow(ctx, `
-		SELECT email, username, COALESCE(name, 'name') as name
+		SELECT id, email, username, COALESCE(name, 'nameless') as name
 		FROM users
 		WHERE username = $1;
 	`, username)
 
-	err = row.Scan(&info.Email, &info.Username, &info.Name)
+	err = row.Scan(&info.ID, &info.Email, &info.Username, &info.Name)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -77,6 +80,11 @@ func (s *Storage) ChangeUsername(ctx context.Context, oldUsername string,  newUs
 
 	err = row.Scan(&info.ID, &info.Email, &info.Username, &info.Name)
 	if err != nil {
+		pgErr := err.(*pgconn.PgError)
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, fmt.Errorf("%s: %w", op, storage.ErrUsernameExists)
+		}
+		
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -173,7 +181,15 @@ func (s *Storage) GetPassword(ctx context.Context, username string) (password []
 	}
 
 	defer func() {
-		
+		if err != nil {
+			_ = tx.Rollback(ctx)
+			return
+		}
+
+		commitErr := tx.Commit(ctx)
+		if commitErr != nil {
+			err = fmt.Errorf("%s: %w", op, commitErr)
+		}
 	}()
 
 	row := tx.QueryRow(ctx, `

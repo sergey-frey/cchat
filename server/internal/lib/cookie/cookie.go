@@ -41,7 +41,7 @@ func SetCookie(w http.ResponseWriter, accessToken string, refreshToken string) {
 }
 
 
-func CheckCookie(w http.ResponseWriter, r *http.Request) (models.NormalizedUser, error) {
+func CheckCookie(w http.ResponseWriter, r *http.Request) (*models.NormalizedUser, error) {
 	accessCookie, err := r.Cookie("access_token")
 	if err != nil {
 		return HandlerError(err)
@@ -56,7 +56,7 @@ func CheckCookie(w http.ResponseWriter, r *http.Request) (models.NormalizedUser,
 
 	accessToken, refreshToken, user, err := jwt.VerifyAccessToken(accessToken, refreshToken)
 	if err != nil {
-		return models.NormalizedUser{}, fmt.Errorf("error with token: %w", err)
+		return nil, fmt.Errorf("error with token: %w", err)
 	}
 
 	if accessToken != "" {
@@ -90,11 +90,11 @@ func DeleteCookie(w http.ResponseWriter) {
 	http.SetCookie(w, cookie)
 }
 
-func HandlerError(err error) (models.NormalizedUser, error) {
+func HandlerError(err error) (*models.NormalizedUser, error) {
 	switch err {
 		case http.ErrNoCookie:
-			return models.NormalizedUser{}, http.ErrNoCookie
+			return nil, http.ErrNoCookie
 		default:
-			return models.NormalizedUser{}, fmt.Errorf("server error")
+			return nil, fmt.Errorf("server error")
 		}
 }

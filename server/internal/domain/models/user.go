@@ -25,11 +25,11 @@ type UserInfo struct {
 }
 
 type NewUserInfo struct {
-	OldPassword string `json:"old_password,omitempty"`
-	NewPassword string `json:"new_password,omitempty"`
-	Email       string `json:"email,omitempty"`
-	Username    string `json:"username,omitempty"`
-	Name        string `json:"name,omitempty"`
+	PreviousPassword string `json:"old_password,omitempty"`
+	NewPassword      string `json:"new_password,omitempty" validate:"min=8"`
+	Email            string `json:"email,omitempty"`
+	Username         string `json:"username,omitempty"`
+	Name             string `json:"name,omitempty" validate:"min=1"`
 }
 
 type NormalizedUser struct {
@@ -46,7 +46,7 @@ func UserToNormalized(user *User) NormalizedUser {
 	}
 }
 
-func InfoToNormalized(info *UserInfo) NormalizedUser{
+func InfoToNormalized(info *UserInfo) NormalizedUser {
 	return NormalizedUser{
 		ID:       info.ID,
 		Username: info.Username,

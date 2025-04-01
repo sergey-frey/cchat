@@ -2,16 +2,18 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
 	"github.com/sergey-frey/cchat/internal/domain/models"
 	"github.com/sergey-frey/cchat/internal/lib/jwt"
 	"github.com/sergey-frey/cchat/internal/lib/logger/sl"
+	"github.com/sergey-frey/cchat/internal/storage"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserServiceProvider interface {
+type UserService interface {
 	GetUser(ctx context.Context, username string) (info *models.UserInfo, err error)
 	ChangeUsername(ctx context.Context, oldUsername string, newUsername string) (info *models.UserInfo, err error)
 	ChangeName(ctx context.Context, username string, newName string) (info *models.UserInfo, err error)
@@ -20,16 +22,21 @@ type UserServiceProvider interface {
 }
 
 type UserDataService struct {
-	userServiceProvider UserServiceProvider
+	userService UserService
 	log          *slog.Logger
 }
 
-func New(userProvider UserServiceProvider, log *slog.Logger) *UserDataService {
+func New(userProvider UserService, log *slog.Logger) *UserDataService {
 	return &UserDataService{
-		userServiceProvider: userProvider,
+		userService: userProvider,
 		log:          log,
 	}
 }
+
+var (
+	ErrUsernameExists = errors.New("username already exists")
+	ErrPasswordsMismatch = errors.New("passwords don't match")
+)
 
 
 func (u *UserDataService) GetUser(ctx context.Context, username string) (*models.UserInfo, error) {
@@ -42,7 +49,7 @@ func (u *UserDataService) GetUser(ctx context.Context, username string) (*models
 
 	log.Info("getting user information")
 
-	info, err := u.userServiceProvider.GetUser(ctx, username)
+	info, err := u.userService.GetUser(ctx, username)
 	if err != nil {
 		log.Error("failed to get user", sl.Err(err))
 
@@ -64,19 +71,20 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 	)
 
 	if newInfo.NewPassword != "" {
+		log.Info("changing password")
 
-		oldPassHash, err := u.userServiceProvider.GetPassword(ctx, username)
+		oldPassHash, err := u.userService.GetPassword(ctx, username)
 		if err != nil {
 			log.Error("failed to get old password")
 
 			return nil, "", "", fmt.Errorf("%s: %w", op, err)
 		}
 
-		err = bcrypt.CompareHashAndPassword(oldPassHash, []byte(newInfo.OldPassword))
+		err = bcrypt.CompareHashAndPassword(oldPassHash, []byte(newInfo.PreviousPassword))
 		if err != nil {
-			log.Error("failed to compare passwords", sl.Err(err))
+			log.Error("failed to compare passwords", sl.Err(ErrPasswordsMismatch))
 
-			return nil, "", "", fmt.Errorf("%s: %w", op, err)
+			return nil, "", "", fmt.Errorf("%s: %w", op, ErrPasswordsMismatch)
 		}
 
 		newPasshHash, err := bcrypt.GenerateFromPassword([]byte(newInfo.NewPassword), bcrypt.DefaultCost)
@@ -86,7 +94,7 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 			return nil, "", "", fmt.Errorf("%s: %w", op, err)
 		}
 
-		err = u.userServiceProvider.ChangePassword(ctx, username, newPasshHash)
+		err = u.userService.ChangePassword(ctx, username, newPasshHash)
 		if err != nil {
 			log.Error("failed to change password")
 
@@ -99,9 +107,16 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 	}
 		
 	if newInfo.Username != "" {
-		info, err := u.userServiceProvider.ChangeUsername(ctx, username, newInfo.Username)
+		log.Info("changing username")
+		
+		info, err := u.userService.ChangeUsername(ctx, username, newInfo.Username)
 		if err != nil {
-			log.Error("failed to change username")
+			if errors.Is(err, storage.ErrUsernameExists) {
+				log.Error("username already exists", sl.Err(err))
+
+				return nil, "", "", fmt.Errorf("%s: %w", op, ErrUsernameExists)
+			}
+			log.Error("failed to change username", sl.Err(err))
 
 			return nil, "", "", fmt.Errorf("%s: %w", op, err)
 		}
@@ -120,7 +135,9 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 	}
 		
 	if newInfo.Name != ""  {
-		info, err := u.userServiceProvider.ChangeName(ctx, username, newInfo.Name)
+		log.Info("changing name")
+
+		info, err := u.userService.ChangeName(ctx, username, newInfo.Name)
 		if err != nil {
 			log.Error("failed with changing name", sl.Err(err))
 

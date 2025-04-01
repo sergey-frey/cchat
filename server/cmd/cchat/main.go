@@ -12,14 +12,14 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/sergey-frey/cchat/internal/app"
 	"github.com/sergey-frey/cchat/internal/config"
-	authHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/auth"
 	"github.com/sergey-frey/cchat/internal/http-server/handlers/session"
-	userHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/user"
 	"github.com/sergey-frey/cchat/internal/http-server/middleware/cors"
+	"github.com/sergey-frey/cchat/internal/http-server/middleware/jwtcheck"
+	authHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/auth"
+	userHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/user"
 	authService "github.com/sergey-frey/cchat/internal/services/auth"
 	userService "github.com/sergey-frey/cchat/internal/services/user"
 	"github.com/sergey-frey/cchat/internal/storage/postgres"
-
 	"github.com/sergey-frey/cchat/cmd/migrator"
 	"github.com/sergey-frey/cchat/internal/lib/logger/slogpretty"
 )
@@ -51,13 +51,13 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	storagePath := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", cfg.Storage.Host, cfg.Storage.Port, cfg.Storage.Username, cfg.Storage.DBName, os.Getenv("DB_PASSWORD"), cfg.Storage.SSLMode)
+	storagePath := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", cfg.Storage.Host, cfg.Storage.Port, cfg.Storage.Username, cfg.Storage.DBName, os.Getenv("PG_DB_PASSWORD"), cfg.Storage.SSLMode)
 
 	pool, err := postgres.New(context.Background(), storagePath)
 	if err != nil {
 		panic(err)
 	}
-	authService := authService.New(pool, log, pool)
+	authService := authService.New(pool, log)
 	authHandler := authHandler.New(authService, log)
 
 	userService := userService.New(pool, log)
@@ -69,7 +69,7 @@ func main() {
 	// 	httpSwagger.URL("http://localhost:1323/swagger/doc.json"), //The url pointing to API definition
 	// ))
 
-	router.With().Route("/cchat/user", func(r chi.Router) {
+	router.With(jwtcheck.JWTCheck).Route("/cchat/user", func(r chi.Router) {
 		r.Get("/profile", userHandler.GetUser(context.Background()))
 		r.Patch("/update", userHandler.UpdateUserInfo(context.Background()))
 	})

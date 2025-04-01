@@ -23,8 +23,8 @@ func ValidationError(errs validator.ValidationErrors) Response {
 			errMsgs = append(errMsgs, fmt.Sprintf("field %s is a required field", err.Field()))
 		// case "email":
 		// 	errMsgs = append(errMsgs, fmt.Sprintf("field %s is not a valid email", err.Field()))
-		// case "min":
-		// 	errMsgs = append(errMsgs, fmt.Sprintf("field %s must have more than %s chars", err.Field(), err.Param()))
+		case "min":
+		 	errMsgs = append(errMsgs, fmt.Sprintf("field %s must have more than %s chars", err.Field(), err.Param()))
 		// case "uppercase":
 		// 	errMsgs = append(errMsgs, fmt.Sprintf("field %s must contain a capital letter", err.Field()))
 		default:

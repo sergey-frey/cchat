@@ -24,5 +24,6 @@ func NewMigration(storagePath string, migrationPath string) {
 		}
 
 		panic(err)
+
 	}
 }

@@ -45,6 +45,8 @@ func New(auth Auth, log *slog.Logger) *AuthHandler {
 // @Failure default {object} Response
 // @Router /cchat/auth/login [post]
 
+
+//go:generate go run github.com/vektra/mockery/v2@v2.53 --name=Auth
 func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.auth.Login"
@@ -56,7 +58,7 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 
 		var req models.LoginUser
 
-		err := render.Decode(r, &req)
+		err := render.DecodeJSON(r.Body, &req)
 		
 		if flag := handlers.HandleError(w, r, req, err, log); !flag {
 			return

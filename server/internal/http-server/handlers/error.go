@@ -27,7 +27,7 @@ func HandleError(w http.ResponseWriter, r *http.Request, req any, err error, log
 			return false
 		}
 
-		log.Error("failed to decode request")
+		log.Error("failed to decode request", sl.Err(err))
 
 		render.Status(r, http.StatusBadRequest)
 

@@ -11,7 +11,7 @@ import (
 
 const (
 	accessDuration = 15 * time.Minute
-	refreshDuration =  43200 * time.Second
+	refreshDuration =  43200 * time.Minute
 )
 
 var (
@@ -48,7 +48,7 @@ func NewPairTokens(user models.NormalizedUser) (string, string, error) {
 }
 
 
-func VerifyAccessToken(accessToken string, refreshToken string) (string, string, models.NormalizedUser, error) {
+func VerifyAccessToken(accessToken string, refreshToken string) (string, string, *models.NormalizedUser, error) {
 	accesstoken, _ := jwt.Parse(accessToken, func(token *jwt.Token) (any, error) {
 		return []byte("somesecret"), nil
 	})
@@ -65,28 +65,28 @@ func VerifyAccessToken(accessToken string, refreshToken string) (string, string,
 		return newAccessToken, newRefreshToken, user, err
 	}
 
-	return "", "", user, nil 
+	return "", "", &user, nil 
 }
 
 
-func VerifyRefreshToken(user models.NormalizedUser, refreshToken string) (string, string, models.NormalizedUser, error) {
+func VerifyRefreshToken(user models.NormalizedUser, refreshToken string) (string, string, *models.NormalizedUser, error) {
 
 	refreshtoken, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
 			return []byte("secret"), nil
 		})
 	
 	if err != nil {
-		return "", "", models.NormalizedUser{}, err
+		return "", "", nil, err
 	}
 
 	if !refreshtoken.Valid {
-		return "", "", models.NormalizedUser{}, ErrUserUnauthorized
+		return "", "", nil, ErrUserUnauthorized
 	}
 
 	newAccessToken, newRefreshToken, err := NewPairTokens(user)
 	if err != nil {				
-		return "", "", models.NormalizedUser{}, err
+		return "", "", nil, err
 	}
 
-	return newAccessToken, newRefreshToken, user, nil
+	return newAccessToken, newRefreshToken, &user, nil
 }

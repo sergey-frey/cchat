@@ -70,7 +70,7 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 		slog.String("username", username),
 	)
 
-	if newInfo.NewPassword != "" {
+	if newInfo.NewPassword != nil {
 		log.Info("changing password")
 
 		oldPassHash, err := u.userService.GetPassword(ctx, username)
@@ -80,14 +80,14 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 			return nil, "", "", fmt.Errorf("%s: %w", op, err)
 		}
 
-		err = bcrypt.CompareHashAndPassword(oldPassHash, []byte(newInfo.PreviousPassword))
+		err = bcrypt.CompareHashAndPassword(oldPassHash, []byte(*newInfo.PreviousPassword))
 		if err != nil {
 			log.Error("failed to compare passwords", sl.Err(ErrPasswordsMismatch))
 
 			return nil, "", "", fmt.Errorf("%s: %w", op, ErrPasswordsMismatch)
 		}
 
-		newPasshHash, err := bcrypt.GenerateFromPassword([]byte(newInfo.NewPassword), bcrypt.DefaultCost)
+		newPasshHash, err := bcrypt.GenerateFromPassword([]byte(*newInfo.NewPassword), bcrypt.DefaultCost)
 		if err != nil {
 			log.Error("failed to generate password hash", sl.Err(err))
 
@@ -106,10 +106,10 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 		return nil, "", "", nil
 	}
 		
-	if newInfo.Username != "" {
+	if newInfo.Username != nil {
 		log.Info("changing username")
 		
-		info, err := u.userService.ChangeUsername(ctx, username, newInfo.Username)
+		info, err := u.userService.ChangeUsername(ctx, username, *newInfo.Username)
 		if err != nil {
 			if errors.Is(err, storage.ErrUsernameExists) {
 				log.Error("username already exists", sl.Err(err))
@@ -134,10 +134,10 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 		return info, accessToken, refreshToken, nil
 	}
 		
-	if newInfo.Name != ""  {
+	if newInfo.Name != nil  {
 		log.Info("changing name")
 
-		info, err := u.userService.ChangeName(ctx, username, newInfo.Name)
+		info, err := u.userService.ChangeName(ctx, username, *newInfo.Name)
 		if err != nil {
 			log.Error("failed with changing name", sl.Err(err))
 

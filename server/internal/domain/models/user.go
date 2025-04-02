@@ -9,7 +9,7 @@ type User struct {
 
 type RegisterUser struct {
 	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8"`
+	Password string `json:"password" validate:"required,gte=8"`
 }
 
 type LoginUser struct {
@@ -25,11 +25,11 @@ type UserInfo struct {
 }
 
 type NewUserInfo struct {
-	PreviousPassword string `json:"old_password,omitempty"`
-	NewPassword      string `json:"new_password,omitempty" validate:"min=8"`
-	Email            string `json:"email,omitempty"`
-	Username         string `json:"username,omitempty"`
-	Name             string `json:"name,omitempty" validate:"min=1"`
+	PreviousPassword *string `json:"previous_password,omitempty"`
+	NewPassword      *string `json:"new_password,omitempty" validate:"omitempty,gte=8"`
+	Email            *string `json:"email,omitempty"`
+	Username         *string `json:"username,omitempty"`
+	Name             *string `json:"name,omitempty" validate:"omitempty,gte=1"`
 }
 
 type NormalizedUser struct {

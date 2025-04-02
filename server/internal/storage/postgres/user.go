@@ -118,7 +118,7 @@ func (s *Storage) ChangeName(ctx context.Context, username string, newName strin
 		UPDATE users
 		SET name = $1
 		WHERE username = $2
-		RETURNING id, email, username, COALESCE(name, 'nameless');
+		RETURNING id, email, username, name;
 	`, newName, username)
 
 	err = row.Scan(&info.ID, &info.Email, &info.Username, &info.Name)

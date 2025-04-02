@@ -73,13 +73,13 @@ func TestRegister_FailCases(t *testing.T) {
 			name: "Register with invalid email",
 			email: gofakeit.Username(),
 			password: randomFakePassword(normalLengthPass),
-			respError: "field Email is not valid",
+			respError: "field Email must be of the email type",
 		},
 		{
 			name: "Register with invalid passsword",
 			email: gofakeit.Email(),
 			password: randomFakePassword(notEnoughLengthPass),
-			respError: "field Password must have more than 8 chars",
+			respError: "field Password must have at least 8 characters",
 		},
 	}
 
@@ -136,7 +136,7 @@ func TestLogin_FailCases(t *testing.T) {
 			name: "Login with invalid email",
 			email: gofakeit.Username(),
 			password: randomFakePassword(normalLengthPass),
-			expectedErr: "field Email is not valid",
+			expectedErr: "field Email must be of the email type",
 		},
 		{
 			name: "Login with invalid password",

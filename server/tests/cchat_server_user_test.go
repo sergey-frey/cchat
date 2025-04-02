@@ -41,22 +41,25 @@ func TestUpdateUserInfo_HappyPath(t *testing.T) {
 	e := httpexpect.Default(t, u.String())
 
 	email := gofakeit.Email()
-	password := randomFakePassword(normalLengthPass)
+	previousPassword := randomFakePassword(normalLengthPass)
+	newPassword := randomFakePassword(normalLengthPass)
+	username := gofakeit.Username()
+	name := gofakeit.Name()
 
 	e.POST("/cchat/auth/register").
 		WithJSON(models.RegisterUser{
 			Email:    email,
-			Password: password,
+			Password: previousPassword,
 		}).
 		Expect().
 		Status(http.StatusOK)
 
 	e.PATCH("/cchat/user/update").
 		WithJSON(models.NewUserInfo{
-			PreviousPassword: password,
-			NewPassword:      randomFakePassword(normalLengthPass),
-			Username:         gofakeit.Username(),
-			Name:             gofakeit.Name(),
+			PreviousPassword: &previousPassword,
+			NewPassword:      &newPassword,
+			Username:         &username,
+			Name:             &name,
 		}).
 		Expect().
 		Status(http.StatusOK)
@@ -99,23 +102,23 @@ func TestUpdatePassword_FailCases(t *testing.T) {
 			email:            email,
 			previousPassword: randomFakePassword(normalLengthPass),
 			newPassword:      randomFakePassword(normalLengthPass),
-			expectedErr:      "passwords not equal",
+			expectedErr:      "passwords don't match",
 		},
 		{
 			name:             "Update password with invalid New password",
 			email:            email,
 			previousPassword: password,
 			newPassword:      randomFakePassword(notEnoughLengthPass),
-			expectedErr:      "field NewPassword is invalid",
+			expectedErr:      "field NewPassword must have at least 8 characters",
 		},
 	}
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			resp = e.PATCH("/cchat/user/profile").
+			resp = e.PATCH("/cchat/user/update").
 				WithJSON(models.NewUserInfo{
-					PreviousPassword: tt.previousPassword,
-					NewPassword:      tt.newPassword,
+					PreviousPassword: &tt.previousPassword,
+					NewPassword:      &tt.newPassword,
 				}).Expect().JSON().Object()
 
 			if tt.expectedErr != "" {
@@ -144,7 +147,7 @@ func TestUpdateUsername_FailCases(t *testing.T) {
 			name:             "Update username with already existed username",
 			email:            gofakeit.Email(),
 			previousPassword: randomFakePassword(normalLengthPass),
-			username:         "",
+			username:         "stepan42k",
 			expectedErr:      "username already exists",
 		},
 	}
@@ -157,18 +160,16 @@ func TestUpdateUsername_FailCases(t *testing.T) {
 
 			e := httpexpect.Default(t, u.String())
 
-			resp := e.POST("/cchat/auth/register").
+			e.POST("/cchat/auth/register").
 				WithJSON(models.RegisterUser{
 					Email:    tt.email,
 					Password: tt.previousPassword,
 				}).Expect().JSON().Object()
 
-			resp = e.PATCH("/cchat/user/profile").
+			resp := e.PATCH("/cchat/user/update").
 				WithJSON(models.NewUserInfo{
-					PreviousPassword: randomFakePassword(normalLengthPass),
-					NewPassword:      tt.newPassword,
-					Username:         tt.username,
-					Name:             tt.name,
+					Username:         &tt.username,
+					Name:             &tt.name,
 				}).Expect().JSON().Object()
 
 			if tt.expectedErr != "" {
@@ -199,7 +200,7 @@ func TestUpdateName_FailCases(t *testing.T) {
 			email:            gofakeit.Email(),
 			previousPassword: randomFakePassword(normalLengthPass),
 			personName:       "",
-			expectedErr:      "field name is invalid",
+			expectedErr:      "field Name must have at least 1 characters",
 		},
 	}
 
@@ -212,18 +213,15 @@ func TestUpdateName_FailCases(t *testing.T) {
 
 			e := httpexpect.Default(t, u.String())
 
-			resp := e.POST("/cchat/auth/register").
+			e.POST("/cchat/auth/register").
 				WithJSON(models.RegisterUser{
 					Email:    tt.email,
 					Password: tt.previousPassword,
 				}).Expect().JSON().Object()
 
-			resp = e.PATCH("/cchat/user/profile").
+			resp := e.PATCH("/cchat/user/update").
 				WithJSON(models.NewUserInfo{
-					PreviousPassword: randomFakePassword(normalLengthPass),
-					NewPassword:      tt.newPassword,
-					Username:         tt.username,
-					Name:             tt.name,
+					Name: &tt.personName,
 				}).Expect().JSON().Object()
 
 			if tt.expectedErr != "" {

@@ -6,10 +6,11 @@ import { AuthPage } from "@/pages/auth-page";
 import { ChatPage } from "@/pages/chat-page";
 import { ChatsPage } from "@/pages/chats-page";
 import { CreateChatPage } from "@/pages/create-chat-page";
+import { EditProfilePage } from "@/pages/edit-profile-page";
 import { ProfilePage } from "@/pages/profile-page";
 import { NAVIGATION } from "@/shared/navigation";
-import { Providers } from "./providers";
 import { Confirm } from "@/shared/utils/confirm";
+import { Providers } from "./providers";
 
 export const App = () => {
   return (
@@ -23,7 +24,10 @@ export const App = () => {
           />
 
           <ProtectedRouter base="/app">
-            <Route path="/profile" component={ProfilePage} />
+            <Router base="/profile">
+              <Route path="/edit" component={EditProfilePage} />
+              <Route path="/" component={ProfilePage} />
+            </Router>
 
             <Router base="/chats">
               <Route path="/" component={ChatsPage} />

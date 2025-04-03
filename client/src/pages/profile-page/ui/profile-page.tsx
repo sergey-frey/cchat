@@ -1,6 +1,7 @@
 import { userSelector, useUserStore } from "@/entities/user";
 import { authService, useLogout } from "@/features/auth";
 import { BottomNavigation } from "@/features/navigation";
+import { NAVIGATION } from "@/shared/navigation";
 import { useConfirm } from "@/shared/utils/confirm";
 import {
   ArrowRightStartOnRectangleIcon,
@@ -9,6 +10,7 @@ import {
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Divider } from "@heroui/divider";
+import { Link } from "wouter";
 
 export const ProfilePage = () => {
   const user = useUserStore(userSelector);
@@ -34,7 +36,13 @@ export const ProfilePage = () => {
 
             <ul className="ml-auto flex gap-2">
               <li>
-                <Button isIconOnly size="sm" variant="flat">
+                <Button
+                  as={Link}
+                  href={NAVIGATION.editProfile}
+                  isIconOnly
+                  size="sm"
+                  variant="flat"
+                >
                   <PencilSquareIcon className="w-4 h-4" />
                 </Button>
               </li>
@@ -56,7 +64,7 @@ export const ProfilePage = () => {
           <Divider />
 
           <CardBody>
-            <ul>
+            <ul className="text-base">
               <li>{email}</li>
             </ul>
           </CardBody>

@@ -1,4 +1,3 @@
-import { useUsersQuery } from "@/entities/user";
 import { BottomNavigation } from "@/features/navigation";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
@@ -7,7 +6,6 @@ import { FormEvent } from "react";
 import { Link, useLocation } from "wouter";
 
 export const CreateChatPage = () => {
-  const { data } = useUsersQuery();
 
   const { state } = useLocation();
 
@@ -34,7 +32,7 @@ export const CreateChatPage = () => {
           </form>
         </div>
 
-        <ul>{data?.map((user) => <li key={user.id}>{user.name}</li>)}</ul>
+        {/* <ul>{data?.map((user) => <li key={user.id}>{user.name}</li>)}</ul> */}
       </section>
 
       <BottomNavigation className="fixed bottom-4 left-1/2 -translate-x-1/2" />

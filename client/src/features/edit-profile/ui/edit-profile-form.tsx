@@ -82,7 +82,7 @@ export const EditProfileForm = ({
           Save
         </Button>
         <Button type="button" color="default" onPress={reset}>
-          Clear
+          Reset
         </Button>
       </div>
     </form>

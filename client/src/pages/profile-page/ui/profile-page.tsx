@@ -36,15 +36,17 @@ export const ProfilePage = () => {
 
             <ul className="ml-auto flex gap-2">
               <li>
-                <Button
-                  as={Link}
+                <Link
+                  asChild
                   href={NAVIGATION.editProfile}
-                  isIconOnly
-                  size="sm"
-                  variant="flat"
+                  state={{ origin: NAVIGATION.profile }}
                 >
-                  <PencilSquareIcon className="w-4 h-4" />
-                </Button>
+                  <Button as={Link} isIconOnly size="sm" variant="flat">
+                    <PencilSquareIcon className="w-4 h-4" />
+                  </Button>
+                </Link>
+
+                <Link href="/" state={{ origin: NAVIGATION.editProfile }} />
               </li>
 
               <li>

@@ -1,5 +1,5 @@
 /* dependencies */
-import { Route, Router, Switch } from "wouter";
+import { Redirect, Route, Router, Switch } from "wouter";
 
 import { ProtectedRouter, UnauthorizedRoute } from "@/features/auth";
 import { AuthPage } from "@/pages/auth-page";
@@ -17,6 +17,11 @@ export const App = () => {
     <Providers>
       <main className="main max-w-[800px] mx-auto w-full">
         <Switch>
+          <Route
+            path="/"
+            component={() => <Redirect to={NAVIGATION.profile} />}
+          />
+
           <UnauthorizedRoute
             path="/auth"
             component={AuthPage}

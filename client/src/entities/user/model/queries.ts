@@ -1,19 +1,24 @@
 import { userApi } from "@/shared/api/instance/instance";
 import { IUser } from "@/shared/api/types";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 
-export const useProfileQuery = () => {
+export const useProfileQuery = (
+  options: Omit<
+    UseQueryOptions<Omit<IUser, "id">>,
+    "queryFn" | "queryKey"
+  > = {},
+) => {
   return useQuery<Omit<IUser, "id">>({
     queryKey: ["profile"],
-    queryFn: () => {
-      return userApi
-        .get<IUser>("profile")
-        .json()
-        .then((res) => ({
-          username: res.username,
-          email: res.email,
-        }));
+    queryFn: async () => {
+      const res = await userApi.get<IUser>("profile").json();
+
+      return {
+        username: res.username,
+        email: res.email,
+      };
     },
+    ...options,
   });
 };
 

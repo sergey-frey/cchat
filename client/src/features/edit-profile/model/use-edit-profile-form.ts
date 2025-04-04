@@ -20,7 +20,9 @@ export const useEditProfileForm = () => {
     email: [],
   });
 
-  const profileQuery = useProfileQuery();
+  const profileQuery = useProfileQuery({
+    staleTime: 0,
+  });
 
   const formData = {
     ...initialFormState,

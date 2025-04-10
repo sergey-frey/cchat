@@ -103,7 +103,6 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 
 		log.Info("password changed")
 
-		return nil, "", "", nil
 	}
 		
 	if newInfo.Username != nil {
@@ -122,7 +121,7 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 		}
 
 		user := models.InfoToNormalized(info)
-		accessToken, refreshToken, err := jwt.NewPairTokens(user)
+		accessToken, refreshToken, err = jwt.NewPairTokens(user)
 		if err != nil {
 			log.Error("failed to generate tokens", sl.Err(err))
 
@@ -131,13 +130,12 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 		
 		log.Info("username changed")
 
-		return info, accessToken, refreshToken, nil
 	}
 		
 	if newInfo.Name != nil  {
 		log.Info("changing name")
 
-		info, err := u.userService.ChangeName(ctx, username, *newInfo.Name)
+		info, err = u.userService.ChangeName(ctx, username, *newInfo.Name)
 		if err != nil {
 			log.Error("failed with changing name", sl.Err(err))
 
@@ -145,9 +143,7 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 		}
 
 		log.Info("name changed")
-
-		return info, "", "", nil
 	}
 	
-	return nil, "", "", nil
+	return info, accessToken, refreshToken, nil
 }

@@ -8,13 +8,13 @@ type User struct {
 }
 
 type RegisterUser struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,gte=8"`
+	Email    string `json:"email" validate:"required,email" example:"example@mail.com"`
+	Password string `json:"password" validate:"required,gte=8" example:"12345678"`
 }
 
 type LoginUser struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+	Email    string `json:"email" validate:"required,email" example:"example@mail.com"`
+	Password string `json:"password" validate:"required" example:"12345678"`
 }
 
 type UserInfo struct {

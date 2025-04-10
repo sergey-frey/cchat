@@ -10,18 +10,23 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/sergey-frey/cchat/cmd/migrator"
 	"github.com/sergey-frey/cchat/internal/app"
 	"github.com/sergey-frey/cchat/internal/config"
+	authHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/auth"
 	"github.com/sergey-frey/cchat/internal/http-server/handlers/session"
+	userHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/user"
 	"github.com/sergey-frey/cchat/internal/http-server/middleware/cors"
 	"github.com/sergey-frey/cchat/internal/http-server/middleware/jwtcheck"
-	authHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/auth"
-	userHandler "github.com/sergey-frey/cchat/internal/http-server/handlers/user"
+	"github.com/sergey-frey/cchat/internal/lib/logger/slogpretty"
 	authService "github.com/sergey-frey/cchat/internal/services/auth"
 	userService "github.com/sergey-frey/cchat/internal/services/user"
 	"github.com/sergey-frey/cchat/internal/storage/postgres"
-	"github.com/sergey-frey/cchat/cmd/migrator"
-	"github.com/sergey-frey/cchat/internal/lib/logger/slogpretty"
+
+	"github.com/swaggo/http-swagger/v2"
+	// _ "github.com/swaggo/http-swagger/example/go-chi/docs"
+	_ "github.com/sergey-frey/cchat/docs"
+
 )
 
 // @title Cchat App API
@@ -30,6 +35,10 @@ import (
 
 // @host localhost:8040
 // @BasePath /cchat
+
+// @securityDefinitions.cookie CookieAuth
+// @in cookie
+// @name accessToken
 
 const (
 	envLocal = "local"
@@ -64,10 +73,10 @@ func main() {
 	userHandler := userHandler.New(userService, log)
 
 	migrator.NewMigration("postgres://postgres:qwerty@psql:5432/postgres?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
-
-	// router.Get("/swagger/*", httpSwagger.Handler(
-	// 	httpSwagger.URL("http://localhost:1323/swagger/doc.json"), //The url pointing to API definition
-	// ))
+	
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8040/swagger/doc.json"), //The url pointing to API definition
+	))
 
 	router.With(jwtcheck.JWTCheck).Route("/cchat/user", func(r chi.Router) {
 		r.Get("/profile", userHandler.GetUser(context.Background()))

@@ -13,18 +13,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthService struct {
-	usrSaver    UserSaver
-	usrProvider UserProvider
-	log *slog.Logger
-}
-
-type UserSaver interface {
+type Auth interface {
 	SaveUser(ctx context.Context, username string, email string, passHash []byte) (*models.NormalizedUser, error)
+	User(ctx context.Context, email string) (*models.User, error)
 }
 
-type UserProvider interface {
-	User(ctx context.Context, email string) (*models.User, error)
+type AuthService struct {
+	auth Auth
+	log *slog.Logger
 }
 
 var (
@@ -35,15 +31,14 @@ var (
 )
 
 
-func New(userSaver UserSaver, log *slog.Logger, userProvider UserProvider) *AuthService {
+func New(auth Auth, log *slog.Logger) *AuthService {
 	return &AuthService{
-		usrSaver:    userSaver,
-		usrProvider: userProvider,
+		auth: auth,
 		log: log,
 	}
 }
 
-
+//go:generate go run github.com/vektra/mockery/v2@v2.53 --name=Auth
 func (a *AuthService) Login(ctx context.Context, loginUser models.LoginUser) (*models.NormalizedUser, string, string, error) {
 	const op = "auth.Login"
 
@@ -54,7 +49,7 @@ func (a *AuthService) Login(ctx context.Context, loginUser models.LoginUser) (*m
 
 	log.Info("attempting to login user")
 
-	user, err := a.usrProvider.User(ctx, loginUser.Email)
+	user, err := a.auth.User(ctx, loginUser.Email)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			log.Warn("user not found", sl.Err(err))
@@ -106,7 +101,7 @@ func (a *AuthService) RegisterNewUser(ctx context.Context, email string, pass st
 
 	username := genusername.GenerateUsername()
 
-	user, err := a.usrSaver.SaveUser(ctx, username, email, passHash)
+	user, err := a.auth.SaveUser(ctx, username, email, passHash)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserExists) {
 			log.Warn("user already exists", sl.Err(err))

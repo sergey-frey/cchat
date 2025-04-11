@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -11,27 +12,29 @@ import (
 	"github.com/sergey-frey/cchat/internal/http-server/handlers"
 	resp "github.com/sergey-frey/cchat/internal/lib/api/response"
 	"github.com/sergey-frey/cchat/internal/lib/cookie"
+	"github.com/sergey-frey/cchat/internal/services/user"
 )
 
-type UserHandlerProvider interface {
+type User interface {
 	GetUser(ctx context.Context, username string) (info *models.UserInfo, err error)
 	UpdateUserInfo(ctx context.Context, username string, newInfo models.NewUserInfo) (info *models.UserInfo, accessToken string, refreshToken string, err error)
 }
 
-type UserDataHandler struct {
-	userHandlerProvider UserHandlerProvider
+type UserHandler struct {
+	userHandler User
 	log                 *slog.Logger
 }
 
-func New(userProvider UserHandlerProvider, log *slog.Logger) *UserDataHandler {
-	return &UserDataHandler{
-		userHandlerProvider: userProvider,
+func New(userProvider User, log *slog.Logger) *UserHandler {
+	return &UserHandler{
+		userHandler: userProvider,
 		log:                 log,
 	}
 }
 
 
-func (u *UserDataHandler) GetUser(ctx context.Context) http.HandlerFunc {
+//go:generate go run github.com/vektra/mockery/v2@v2.53 --name=User
+func (u *UserHandler) GetUser(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.user.GetUser"
 
@@ -45,13 +48,15 @@ func (u *UserDataHandler) GetUser(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		info, err := u.userHandlerProvider.GetUser(ctx, username)
+		info, err := u.userHandler.GetUser(ctx, username)
 		if err != nil {
 			log.Error("failed to get info")
 
+			render.Status(r, http.StatusBadRequest)
+
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusBadRequest,
-				Error:  "failed to get info",
+				Error:  err.Error(),
 			})
 
 			return
@@ -67,7 +72,7 @@ func (u *UserDataHandler) GetUser(ctx context.Context) http.HandlerFunc {
 }
 
 
-func (u *UserDataHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
+func (u *UserHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.user.UpdateUserInfo"
 
@@ -88,14 +93,36 @@ func (u *UserDataHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		info, accessToken, refreshToken, err := u.userHandlerProvider.UpdateUserInfo(ctx, username, newInfo)
+		info, accessToken, refreshToken, err := u.userHandler.UpdateUserInfo(ctx, username, newInfo)
 
 		if refreshToken != "" {
 			cookie.SetCookie(w, accessToken, refreshToken)
 		}
 
 		if err != nil {
-			log.Error("failed to update user information")
+			if errors.Is(err, user.ErrUsernameExists) {
+				render.Status(r, http.StatusConflict)
+
+				render.JSON(w, r, resp.Response{
+					Status: http.StatusConflict,
+					Error:  "username already exists",
+				})
+
+				return
+			}
+
+			if errors.Is(err, user.ErrPasswordsMismatch) {
+				render.Status(r, http.StatusConflict)
+
+				render.JSON(w, r, resp.Response{
+					Status: http.StatusConflict,
+					Error:  "passwords don't match",
+				})
+
+				return
+			}
+			
+			render.Status(r, http.StatusBadRequest)
 
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusBadRequest,
@@ -105,7 +132,7 @@ func (u *UserDataHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		log.Info("information changed")
+		log.Info("information changed successfully")
 
 		render.JSON(w, r, resp.Response{
 			Status: http.StatusOK,
@@ -117,10 +144,12 @@ func (u *UserDataHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
 
 func HandleGettingCookie(w http.ResponseWriter, r *http.Request, err error, log *slog.Logger) bool {
 	if err != nil {
-		log.Error("failed to taking user info")
+		log.Error("failed to take user info")
+
+		render.Status(r, http.StatusUnauthorized)
 
 		render.JSON(w, r, resp.Response{
-			Status: http.StatusBadRequest,
+			Status: http.StatusUnauthorized,
 			Error:  "failed with getting cookie",
 		})
 

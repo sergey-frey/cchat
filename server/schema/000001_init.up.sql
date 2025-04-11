@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS
         "username" TEXT NOT NULL UNIQUE,
         "email" TEXT NOT NULL UNIQUE,
         "pass_hash" BYTEA NOT NULL,
-        "name" TEXT
+        "name" TEXT NOT NULL
         -- "socket" TEXT
     );
 

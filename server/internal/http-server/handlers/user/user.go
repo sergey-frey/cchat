@@ -33,6 +33,18 @@ func New(userProvider User, log *slog.Logger) *UserHandler {
 }
 
 
+// @Summary GetProfile
+// @Tags user
+// @Description Retrieves data about an authenticated user
+// @ID get-profile
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} models.UserInfo
+// @Failure 400,409 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Security CookieAuth
+// @Router /user/profile [get]
 //go:generate go run github.com/vektra/mockery/v2@v2.53 --name=User
 func (u *UserHandler) GetUser(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -72,6 +84,19 @@ func (u *UserHandler) GetUser(ctx context.Context) http.HandlerFunc {
 }
 
 
+// @Summary UpdateProfile
+// @Tags user
+// @Description Updates the user's information
+// @ID update-profile
+// @Accept  json
+// @Produce  json
+// @Param input body models.NewUserInfo true "The new password is at least 8 characters long and has a valid email address."
+// @Success 200 {object} models.UserInfo
+// @Failure 400,409 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Security CookieAuth
+// @Router /user/update [patch]
 func (u *UserHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.user.UpdateUserInfo"

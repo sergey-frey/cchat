@@ -11,7 +11,7 @@ import (
 	"github.com/sergey-frey/cchat/internal/storage"
 )
 
-func (s *Storage) SaveUser(ctx context.Context, username string, email string, passHash []byte) (*models.NormalizedUser, error) {
+func (s *Storage) SaveUser(ctx context.Context, name string, username string, email string, passHash []byte) (*models.NormalizedUser, error) {
 	const op = "storage.postgres.SaveUser"
 
 	tx, err := s.pool.Begin(ctx)
@@ -32,10 +32,10 @@ func (s *Storage) SaveUser(ctx context.Context, username string, email string, p
 	}()
 
 	row := tx.QueryRow(ctx, `
-		INSERT INTO users (username, email, pass_hash)
-		VALUES($1, $2, $3)
+		INSERT INTO users (name, username, email, pass_hash)
+		VALUES($1, $2, $3, $4)
 		RETURNING id, username, email
-	`, username, email, passHash)
+	`, name, username, email, passHash)
 
 	var user models.NormalizedUser
 

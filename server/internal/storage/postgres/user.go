@@ -34,7 +34,7 @@ func (s *Storage) GetUser(ctx context.Context, username string) (*models.UserInf
 	var info models.UserInfo
 
 	row := tx.QueryRow(ctx, `
-		SELECT id, email, username, COALESCE(name, 'nameless') as name
+		SELECT id, email, username, name
 		FROM users
 		WHERE username = $1;
 	`, username)
@@ -75,7 +75,7 @@ func (s *Storage) ChangeUsername(ctx context.Context, oldUsername string,  newUs
 		UPDATE users
 		SET username = $1
 		WHERE username = $2
-		RETURNING id, email, username, COALESCE(name, 'nameless');
+		RETURNING id, email, username, name;
 	`, newUsername, oldUsername)
 
 	err = row.Scan(&info.ID, &info.Email, &info.Username, &info.Name)

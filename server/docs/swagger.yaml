@@ -14,17 +14,19 @@ definitions:
     type: object
   models.NewUserInfo:
     properties:
-      email:
-        type: string
       name:
+        example: Arnold
         minLength: 1
         type: string
       new_password:
+        example: "123456789"
         minLength: 8
         type: string
       previous_password:
+        example: "12345678"
         type: string
       username:
+        example: arnold2004
         type: string
     type: object
   models.NormalizedUser:

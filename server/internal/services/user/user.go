@@ -16,6 +16,7 @@ import (
 type UserService interface {
 	GetUser(ctx context.Context, username string) (info *models.UserInfo, err error)
 	ChangeUsername(ctx context.Context, oldUsername string, newUsername string) (info *models.UserInfo, err error)
+	ChangeEmail(ctx context.Context, username string, newEmail string) (info *models.UserInfo, err error)
 	ChangeName(ctx context.Context, username string, newName string) (info *models.UserInfo, err error)
 	ChangePassword(ctx context.Context, username string, newPasswordHash []byte) (err error)
 	GetPassword(ctx context.Context, username string) (passHash []byte, err error)
@@ -122,13 +123,16 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 	if newInfo.Email != ""  {
 		log.Info("changing email")
 
-		info, err = u.userService.ChangeName(ctx, username, newInfo.Name)
+		info, err = u.userService.ChangeEmail(ctx, username, newInfo.Email)
 		if err != nil {
 			if errors.Is(err, storage.ErrEmailExists) {
 				log.Error("email already exists", sl.Err(err))
 
-				return nil, "", "", fmt.Errorf("%s: %w", op, ErrUsernameExists)
+				return nil, "", "", fmt.Errorf("%s: %w", op, ErrEmailExists)
 			}
+			log.Error("failed to change email", sl.Err(err))
+
+			return nil, "", "", fmt.Errorf("%s: %w", op, err)
 		}
 
 		log.Info("email changed")

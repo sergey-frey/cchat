@@ -15,16 +15,15 @@ import (
 
 // @Summary Session
 // @Tags auth
-// @Description check session
+// @Description Checks whether a cookie with a token is set
 // @ID check-session
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} models.NormalizedUser
-// @Failure 400,401,404 {object} Response
-// @Failure 500 {object} Response
-// @Failure default {object} Response
-// @Router cchat/auth/session [post]
-
+// @Success 200 {object} response.Response
+// @Failure 400,401 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Router /auth/session [post]
 func CheckSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "session.CheckSession"
@@ -69,14 +68,13 @@ func CheckSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 
 // @Summary Logout
 // @Tags auth
-// @Description finish session
+// @Description Terminates the user's session, deletes the cookie with the token
 // @ID finish-session
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} Response
-// @Failure default {object} Response
-// @Router cchat/auth/logout[post]
-
+// @Success 200 {object} response.Response
+// @Failure default {object} response.Response
+// @Router /auth/logout [post]
 func FinishSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "session.FinishSession"

@@ -34,18 +34,16 @@ func New(auth Auth, log *slog.Logger) *AuthHandler {
 
 // @Summary Login
 // @Tags auth
-// @Description login
+// @Description Accepts email and password and verifies them
 // @ID create-account
 // @Accept  json
 // @Produce  json
-// @Param input body models.LoginUser true "account info"
+// @Param input body models.LoginUser true "valid email and password"
 // @Success 200 {object} models.NormalizedUser
-// @Failure 400,404,409 {object} Response
-// @Failure 500 {object} Response
-// @Failure default {object} Response
-// @Router /cchat/auth/login [post]
-
-
+// @Failure 400,404,409 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Router /auth/login [post]
 //go:generate go run github.com/vektra/mockery/v2@v2.53 --name=Auth
 func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -99,17 +97,16 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 
 // @Summary Register
 // @Tags auth
-// @Description create account
-// @ID create-account
+// @Description Accepts the email and password and if the email does not exist creates a new user
+// @ID login-account
 // @Accept  json
 // @Produce  json
-// @Param input body todo.RegisterUser true "account info"
+// @Param input body models.RegisterUser true "valid email and password(minimum of 8 characters)"
 // @Success 200 {object} models.NormalizedUser
-// @Failure 400,404,409 {object} Response
-// @Failure 500 {object} Response
-// @Failure default {object} Response
-// @Router /cchat/auth/register [post]
-
+// @Failure 400,404,409 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Router /auth/register [post]
 func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.auth.Register"

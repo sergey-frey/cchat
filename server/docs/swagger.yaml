@@ -1,0 +1,295 @@
+basePath: /cchat
+definitions:
+  models.LoginUser:
+    properties:
+      email:
+        example: example@mail.com
+        type: string
+      password:
+        example: "12345678"
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.NewUserInfo:
+    properties:
+      name:
+        example: Arnold
+        minLength: 1
+        type: string
+      new_password:
+        example: "123456789"
+        minLength: 8
+        type: string
+      previous_password:
+        example: "12345678"
+        type: string
+      username:
+        example: arnold2004
+        type: string
+    type: object
+  models.NormalizedUser:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      username:
+        type: string
+    type: object
+  models.RegisterUser:
+    properties:
+      email:
+        example: example@mail.com
+        type: string
+      password:
+        example: "12345678"
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.UserInfo:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      username:
+        type: string
+    type: object
+  response.Response:
+    properties:
+      data: {}
+      error:
+        type: string
+      status:
+        type: integer
+    type: object
+host: localhost:8040
+info:
+  contact: {}
+  description: API Server for Cchat application
+  title: Cchat App API
+  version: "0.1"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Accepts email and password and verifies them
+      operationId: create-account
+      parameters:
+      - description: valid email and password
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.NormalizedUser'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Terminates the user's session, deletes the cookie with the token
+      operationId: finish-session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Logout
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Accepts the email and password and if the email does not exist
+        creates a new user
+      operationId: login-account
+      parameters:
+      - description: valid email and password(minimum of 8 characters)
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.NormalizedUser'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Register
+      tags:
+      - auth
+  /auth/session:
+    post:
+      consumes:
+      - application/json
+      description: Checks whether a cookie with a token is set
+      operationId: check-session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Session
+      tags:
+      - auth
+  /user/profile:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves data about an authenticated user
+      operationId: get-profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - CookieAuth: []
+      summary: GetProfile
+      tags:
+      - user
+  /user/update:
+    patch:
+      consumes:
+      - application/json
+      description: Updates the user's information
+      operationId: update-profile
+      parameters:
+      - description: The new password is at least 8 characters long and has a valid
+          email address.
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.NewUserInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - CookieAuth: []
+      summary: UpdateProfile
+      tags:
+      - user
+swagger: "2.0"

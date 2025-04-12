@@ -14,7 +14,7 @@ import (
 )
 
 type Auth interface {
-	SaveUser(ctx context.Context, username string, email string, passHash []byte) (*models.NormalizedUser, error)
+	SaveUser(ctx context.Context, name string, username string, email string, passHash []byte) (*models.NormalizedUser, error)
 	User(ctx context.Context, email string) (*models.User, error)
 }
 
@@ -100,8 +100,9 @@ func (a *AuthService) RegisterNewUser(ctx context.Context, email string, pass st
 	}
 
 	username := genusername.GenerateUsername()
+	name := "nameless"
 
-	user, err := a.auth.SaveUser(ctx, username, email, passHash)
+	user, err := a.auth.SaveUser(ctx, name, username, email, passHash)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserExists) {
 			log.Warn("user already exists", sl.Err(err))

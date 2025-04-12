@@ -1,7 +1,7 @@
 package models
 
 type User struct {
-	ID       int64
+	ID       int64  `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email" validate:"required"`
 	PassHash []byte `json:"password" validate:"required"`
@@ -18,25 +18,24 @@ type LoginUser struct {
 }
 
 type UserInfo struct {
-	ID       int64
+	ID       int64  `json:"id"`
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Name     string `json:"name"`
 }
 
 type NewUserInfo struct {
+	Email            string `json:"email,omitempty" validate:"omitempty,email" example:"example@mail.com"`
 	PreviousPassword string `json:"previous_password,omitempty" validate:"omitempty" example:"12345678"`
 	NewPassword      string `json:"new_password,omitempty" validate:"omitempty,gte=8" example:"123456789"`
 	Username         string `json:"username,omitempty" validate:"omitempty" example:"arnold2004"`
 	Name             string `json:"name,omitempty" validate:"omitempty,gte=1" example:"Arnold"`
-	// Email            *string `json:"email,omitempty"`
-	
 }
 
 type NormalizedUser struct {
-	ID       int64
-	Username string
-	Email    string
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
 }
 
 func UserToNormalized(user *User) NormalizedUser {

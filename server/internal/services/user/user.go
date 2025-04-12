@@ -35,6 +35,7 @@ func New(userProvider UserService, log *slog.Logger) *UserDataService {
 
 var (
 	ErrUsernameExists = errors.New("username already exists")
+	ErrEmailExists = errors.New("email already exists")
 	ErrPasswordsMismatch = errors.New("passwords don't match")
 )
 
@@ -116,6 +117,21 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 		}
 
 		log.Info("name changed")
+	}
+
+	if newInfo.Email != ""  {
+		log.Info("changing email")
+
+		info, err = u.userService.ChangeName(ctx, username, newInfo.Name)
+		if err != nil {
+			if errors.Is(err, storage.ErrEmailExists) {
+				log.Error("email already exists", sl.Err(err))
+
+				return nil, "", "", fmt.Errorf("%s: %w", op, ErrUsernameExists)
+			}
+		}
+
+		log.Info("email changed")
 	}
 
 	if newInfo.Username != "" {

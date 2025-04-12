@@ -14,6 +14,9 @@ definitions:
     type: object
   models.NewUserInfo:
     properties:
+      email:
+        example: example@mail.com
+        type: string
       name:
         example: Arnold
         minLength: 1
@@ -216,7 +219,7 @@ paths:
       summary: Session
       tags:
       - auth
-  /user/profile:
+  /user/myprofile:
     get:
       consumes:
       - application/json

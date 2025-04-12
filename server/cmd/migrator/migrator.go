@@ -16,7 +16,16 @@ func NewMigration(storagePath string, migrationPath string) {
 	if err != nil {
 		panic(err)
 	}
-	// if err := m.Up(); err != nil {
+	if err := m.Up(); err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			fmt.Println("no migrations to apply")
+
+			return
+		}
+		panic(err)
+	}
+
+	// if err := m.Migrate(1); err != nil {
 	// 	if errors.Is(err, migrate.ErrNoChange) {
 	// 		fmt.Println("no migrations to apply")
 
@@ -26,15 +35,4 @@ func NewMigration(storagePath string, migrationPath string) {
 	// 	panic(err)
 
 	// }
-
-	if err := m.Migrate(1); err != nil {
-		if errors.Is(err, migrate.ErrNoChange) {
-			fmt.Println("no migrations to apply")
-
-			return
-		}
-
-		panic(err)
-
-	}
 }

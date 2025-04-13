@@ -79,7 +79,7 @@ func main() {
 	))
 
 	router.With(jwtcheck.JWTCheck).Route("/cchat/user", func(r chi.Router) {
-		r.Get("/profile", userHandler.GetUser(context.Background()))
+		r.Get("/myprofile", userHandler.GetUser(context.Background()))
 		r.Patch("/update", userHandler.UpdateUserInfo(context.Background()))
 	})
 

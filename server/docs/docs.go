@@ -223,7 +223,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/profile": {
+        "/user/myprofile": {
             "get": {
                 "security": [
                     {
@@ -362,6 +362,10 @@ const docTemplate = `{
         "models.NewUserInfo": {
             "type": "object",
             "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "example@mail.com"
+                },
                 "name": {
                     "type": "string",
                     "minLength": 1,

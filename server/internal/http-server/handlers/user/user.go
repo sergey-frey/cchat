@@ -44,7 +44,7 @@ func New(userProvider User, log *slog.Logger) *UserHandler {
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
 // @Security CookieAuth
-// @Router /user/profile [get]
+// @Router /user/myprofile [get]
 //go:generate go run github.com/vektra/mockery/v2@v2.53 --name=User
 func (u *UserHandler) GetUser(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -131,6 +131,17 @@ func (u *UserHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusConflict,
 					Error:  "username already exists",
+				})
+
+				return
+			}
+
+			if errors.Is(err, user.ErrEmailExists) {
+				render.Status(r, http.StatusConflict)
+
+				render.JSON(w, r, resp.Response{
+					Status: http.StatusConflict,
+					Error:  "email already exists",
 				})
 
 				return

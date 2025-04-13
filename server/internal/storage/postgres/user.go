@@ -92,6 +92,50 @@ func (s *Storage) ChangeUsername(ctx context.Context, oldUsername string,  newUs
 }
 
 
+func (s *Storage) ChangeEmail(ctx context.Context, username string,  newEmail string) (*models.UserInfo, error)  {
+	const op = "storage.postgres.user.ChangeUsername"
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+			return
+		}
+		
+		commitErr := tx.Commit(ctx)
+		if commitErr != nil {
+			err = fmt.Errorf("%s: %w", op, commitErr)
+		}
+
+	}()
+
+	var info models.UserInfo
+
+	row := tx.QueryRow(ctx, `
+		UPDATE users
+		SET email = $1
+		WHERE username = $2
+		RETURNING id, email, username, name;
+	`, newEmail, username)
+
+	err = row.Scan(&info.ID, &info.Email, &info.Username, &info.Name)
+	if err != nil {
+		pgErr := err.(*pgconn.PgError)
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, fmt.Errorf("%s: %w", op, storage.ErrEmailExists)
+		}
+		
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return &info, nil
+}
+
+
 func (s *Storage) ChangeName(ctx context.Context, username string, newName string) (*models.UserInfo, error) {
 	const op = "storage.postgres.user.ChangeName"
 

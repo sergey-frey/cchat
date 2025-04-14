@@ -224,7 +224,7 @@ paths:
       consumes:
       - application/json
       description: Retrieves data about an authenticated user
-      operationId: get-profile
+      operationId: get-my-profile
       produces:
       - application/json
       responses:
@@ -238,6 +238,46 @@ paths:
             $ref: '#/definitions/response.Response'
         "409":
           description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - CookieAuth: []
+      summary: GetMyProfile
+      tags:
+      - user
+  /user/profile/{username}:
+    get:
+      consumes:
+      - application/json
+      description: Returns user data, if it exists.
+      operationId: get-profile
+      parameters:
+      - description: Existing username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/response.Response'
         "500":

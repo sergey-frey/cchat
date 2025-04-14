@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 	"github.com/sergey-frey/cchat/internal/domain/models"
 	"github.com/sergey-frey/cchat/internal/storage"
 )
@@ -41,6 +42,46 @@ func (s *Storage) GetUser(ctx context.Context, username string) (*models.UserInf
 
 	err = row.Scan(&info.ID, &info.Email, &info.Username, &info.Name)
 	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return &info, nil
+}
+
+
+func (s *Storage) GetProfile(ctx context.Context, username string) (*models.UserInfo, error) {
+	const op = "storage.postgres.user.GetProfile"
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	defer func ()  {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+			return
+		}
+
+		commitErr := tx.Commit(ctx)
+		if commitErr != nil {
+			err = fmt.Errorf("%s: %w", op, commitErr)
+		}
+	}()
+
+	var info models.UserInfo
+
+	row := tx.QueryRow(ctx, `
+		SELECT id, email, username, name
+		FROM users
+		WHERE username = $1;
+	`, username)
+
+	err = row.Scan(&info.ID, &info.Email, &info.Username, &info.Name)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+		}
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 

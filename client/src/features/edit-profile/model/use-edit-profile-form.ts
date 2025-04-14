@@ -1,4 +1,4 @@
-import { useProfileQuery } from "@/entities/user";
+import { useProfileQuery, useUpdateProfileQuery } from "@/entities/user";
 import debounce from "debounce";
 import { FormEvent, useCallback, useState } from "react";
 import { safeParseAsync } from "valibot";
@@ -9,7 +9,13 @@ const initialFormState: EditProfileFormSchema = {
   email: "",
 };
 
-export const useEditProfileForm = () => {
+type UseEditProfileFormOptions = {
+  onSuccess?: () => void;
+};
+
+export const useEditProfileForm = ({
+  onSuccess,
+}: UseEditProfileFormOptions = {}) => {
   const [userFormState, setUserFormState] = useState<
     Partial<EditProfileFormSchema>
   >({});
@@ -22,7 +28,12 @@ export const useEditProfileForm = () => {
 
   const profileQuery = useProfileQuery({
     staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
+
+  const updateProfileMutation = useUpdateProfileQuery();
 
   const formData = {
     ...initialFormState,
@@ -75,12 +86,17 @@ export const useEditProfileForm = () => {
     if (errors.username.length > 0) return;
     if (errors.email.length > 0) return;
 
-    console.log(formData);
+    updateProfileMutation.mutateAsync(formData).then(() => {
+      onSuccess?.();
+    });
   };
 
   return {
     formData,
     isPending: profileQuery.isPending,
+    mutationState: {
+      isPending: updateProfileMutation.isPending,
+    },
     handleUsernameChange,
     handleEmailChange,
     handleSubmit,

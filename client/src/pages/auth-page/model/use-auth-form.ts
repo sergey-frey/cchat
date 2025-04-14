@@ -1,4 +1,4 @@
-import { authService } from "@/features/auth/model/auth-service";
+import { authService } from "@/entities/auth/model/auth-service";
 import { NAVIGATION } from "@/shared/navigation";
 import { valibotResolver } from "@hookform/resolvers/valibot";
 import { useForm } from "react-hook-form";

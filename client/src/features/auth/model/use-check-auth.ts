@@ -1,16 +1,13 @@
-import { useUserStore } from "@/entities/user";
-import { authService } from "@/features/auth/model/auth-service";
+import { authService } from "@/entities/auth/model/auth-service";
 import { useEffect } from "react";
 
-export const useCheckAuth = () => {
-  const { user, setUser } = useUserStore();
+type UseCheckAuthOptions = {
+  onSuccess: () => void;
+  onError: () => void;
+};
 
+export const useCheckAuth = ({ onSuccess, onError }: UseCheckAuthOptions) => {
   useEffect(() => {
-    authService
-      .checkSession()
-      .then((response) => setUser(response.data))
-      .catch(() => setUser(null));
-  }, [setUser]);
-
-  return user;
+    authService.checkSession().then(onSuccess).catch(onError);
+  }, []);
 };

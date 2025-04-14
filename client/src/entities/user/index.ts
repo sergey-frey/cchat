@@ -1,3 +1,3 @@
 export * from "./model/queries";
-export { useUserStore } from "./model/user-store";
-export * from "./model/user-store-selectors";
+export type { UpdateUserDto } from "./types/dto";
+export type { IUserProfileResponse } from "./types/responses";

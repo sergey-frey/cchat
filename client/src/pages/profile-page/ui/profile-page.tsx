@@ -1,4 +1,4 @@
-import { userSelector, useUserStore } from "@/entities/user";
+import { useProfileQuery } from "@/entities/user";
 import { authService, useLogout } from "@/features/auth";
 import { BottomNavigation } from "@/features/navigation";
 import { NAVIGATION } from "@/shared/navigation";
@@ -13,15 +13,15 @@ import { Divider } from "@heroui/divider";
 import { Link } from "wouter";
 
 export const ProfilePage = () => {
-  const user = useUserStore(userSelector);
+  const profileQuery = useProfileQuery();
   const logout = useLogout();
   const confirm = useConfirm({
     content: "Are you sure you want to logout?",
   });
 
-  if (!user) return null;
+  if (!profileQuery.isSuccess) return null;
 
-  const { username, email } = user;
+  const { username, email } = profileQuery.data;
 
   const handleLogoutClick = confirm((closeConfirm) => {
     authService.logout().then(logout).finally(closeConfirm);

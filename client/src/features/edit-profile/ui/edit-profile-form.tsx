@@ -1,10 +1,12 @@
+import { NAVIGATION } from "@/shared/navigation";
 import { cn } from "@/shared/utils/cn";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Skeleton } from "@heroui/skeleton";
 import { FormHTMLAttributes } from "react";
+import { useLocation } from "wouter";
 import { useEditProfileForm } from "../model/use-edit-profile-form";
-import { Button } from "@heroui/button";
 
 type EditProfileFormProps = FormHTMLAttributes<HTMLFormElement> & {};
 
@@ -12,19 +14,28 @@ export const EditProfileForm = ({
   className,
   ...props
 }: EditProfileFormProps) => {
+  const setLocation = useLocation()[1];
+
   const {
     formData,
     handleUsernameChange,
     handleEmailChange,
     handleSubmit,
     isPending,
+    mutationState,
     errors,
     reset,
-  } = useEditProfileForm();
+  } = useEditProfileForm({
+    onSuccess: () => {
+      setLocation(NAVIGATION.profile);
+    },
+  });
 
   const isValidUsername = !errors.username.length;
   const isValidEmail = !errors.email.length;
-  const isSubmitDisabled = !isValidUsername || !isValidEmail || isPending;
+  const isSubmitDisabled =
+    !isValidUsername || !isValidEmail || isPending || mutationState.isPending;
+  const isInputsDisabled = mutationState.isPending;
 
   const usernameInputValidIcon = isValidUsername ? (
     <CheckCircleIcon className="w-6 h-6 text-green-500" />
@@ -41,6 +52,7 @@ export const EditProfileForm = ({
             value={formData.username}
             onValueChange={handleUsernameChange}
             isInvalid={!isValidUsername}
+            isDisabled={isInputsDisabled}
             errorMessage={
               <ul>
                 {errors.username.map((error, i) => (
@@ -61,6 +73,7 @@ export const EditProfileForm = ({
             value={formData.email}
             onValueChange={handleEmailChange}
             isInvalid={!isValidEmail}
+            isDisabled={isInputsDisabled}
             errorMessage={
               <ul>
                 {errors.email.map((error, i) => (

@@ -1,24 +1,23 @@
 import { useChatsQuery } from "@/entities/chats";
-import { userSelector, useUserStore } from "@/entities/user";
+import { useProfileQuery } from "@/entities/user";
 import { BottomNavigation } from "@/features/navigation";
-import { IUser } from "@/shared/api/types";
 import { NAVIGATION } from "@/shared/navigation";
+import { cn } from "@/shared/utils/cn";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
 import { useState } from "react";
 import { Link } from "wouter";
 import { ChatPreview } from "./chat-preview";
 import { ChatsSearch } from "./chats-search";
-import { cn } from "@/shared/utils/cn";
 
 export const ChatsPage = () => {
   const [search, setSearch] = useState("");
   const { data, isPending, isError, error } = useChatsQuery(search);
-  const user = useUserStore(userSelector) as IUser;
+  const profileQuery = useProfileQuery();
 
-  if (isPending) return <>Loading...</>;
+  if (isPending || profileQuery.isPending) return <>Loading...</>;
 
-  if (isError) return <>Error: {error?.message}</>;
+  if (isError || profileQuery.isError) return <>Error: {error?.message}</>;
 
   const handleSearchSubmit = (searchValue: string) => {
     setSearch(searchValue);
@@ -54,7 +53,7 @@ export const ChatsPage = () => {
                   <ChatPreview
                     key={chat.id}
                     chatPreview={chat}
-                    currentUser={user}
+                    currentUser={profileQuery.data}
                   />
                 </Link>
               </li>

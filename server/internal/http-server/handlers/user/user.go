@@ -6,17 +6,20 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"github.com/sergey-frey/cchat/internal/domain/models"
 	"github.com/sergey-frey/cchat/internal/http-server/handlers"
 	resp "github.com/sergey-frey/cchat/internal/lib/api/response"
 	"github.com/sergey-frey/cchat/internal/lib/cookie"
+	"github.com/sergey-frey/cchat/internal/lib/logger/sl"
 	"github.com/sergey-frey/cchat/internal/services/user"
 )
 
 type User interface {
 	GetUser(ctx context.Context, username string) (info *models.UserInfo, err error)
+	GetProfile(ctx context.Context, username string) (info *models.UserInfo, err error)
 	UpdateUserInfo(ctx context.Context, username string, newInfo models.NewUserInfo) (info *models.UserInfo, accessToken string, refreshToken string, err error)
 }
 
@@ -33,10 +36,10 @@ func New(userProvider User, log *slog.Logger) *UserHandler {
 }
 
 
-// @Summary GetProfile
+// @Summary GetMyProfile
 // @Tags user
 // @Description Retrieves data about an authenticated user
-// @ID get-profile
+// @ID get-my-profile
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} models.UserInfo
@@ -79,6 +82,76 @@ func (u *UserHandler) GetUser(ctx context.Context) http.HandlerFunc {
 		render.JSON(w, r, resp.Response{
 			Status: http.StatusOK,
 			Data:   info,
+		})
+	}
+}
+
+
+// @Summary GetProfile
+// @Tags user
+// @Description Returns user data, if it exists.
+// @ID get-profile
+// @Accept  json
+// @Produce  json
+// @Param username path string true "Existing username"
+// @Success 200 {object} models.UserInfo
+// @Failure 400,404 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Security CookieAuth
+// @Router /user/profile/{username} [get]
+func (u *UserHandler) GetProfile(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		const op = "handler.user.GetProfile"
+
+		log := u.log.With(
+			slog.String("op", op),
+			slog.String("request_id", middleware.GetReqID(r.Context())),
+		)
+
+		username := chi.URLParam(r, "username")
+		if username == "" {
+			log.Warn("username is empty")
+
+			render.JSON(w, r, resp.Response{
+				Status: http.StatusConflict,
+				Error: "invalid request",
+			})
+
+			return
+		}
+
+		userInfo, err := u.userHandler.GetProfile(ctx, username)
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				log.Warn("user not found", "user", username)
+
+				render.JSON(w, r, resp.Response{
+					Status: http.StatusNotFound,
+					Error: "user not found",
+				})
+
+				return
+			}
+			log.Error("failed to get profile", sl.Err(err))
+
+			render.JSON(w, r, resp.Response{
+				Status: http.StatusBadRequest,
+				Error: "failed to get profile",
+			})
+
+			return
+		}
+
+		// path := "/profile/" + username
+
+		log.Info("got profile")
+
+		// http.Redirect(w, r, path, http.StatusMovedPermanently)
+
+		render.JSON(w, r, resp.Response{
+			Status: http.StatusOK,
+			Data: userInfo,
 		})
 	}
 }

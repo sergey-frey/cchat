@@ -15,6 +15,7 @@ import (
 
 type UserService interface {
 	GetUser(ctx context.Context, username string) (info *models.UserInfo, err error)
+	GetProfile(ctx context.Context, username string) (info *models.UserInfo, err error)
 	ChangeUsername(ctx context.Context, oldUsername string, newUsername string) (info *models.UserInfo, err error)
 	ChangeEmail(ctx context.Context, username string, newEmail string) (info *models.UserInfo, err error)
 	ChangeName(ctx context.Context, username string, newName string) (info *models.UserInfo, err error)
@@ -35,6 +36,7 @@ func New(userProvider UserService, log *slog.Logger) *UserDataService {
 }
 
 var (
+	ErrUserNotFound = errors.New("user not found")
 	ErrUsernameExists = errors.New("username already exists")
 	ErrEmailExists = errors.New("email already exists")
 	ErrPasswordsMismatch = errors.New("passwords don't match")
@@ -54,6 +56,35 @@ func (u *UserDataService) GetUser(ctx context.Context, username string) (*models
 	info, err := u.userService.GetUser(ctx, username)
 	if err != nil {
 		log.Error("failed to get user", sl.Err(err))
+
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("got info")
+
+	return info, nil
+}
+
+
+func (u *UserDataService) GetProfile(ctx context.Context, username string) (*models.UserInfo, error) {
+	const op = "services.user.GetProfile"
+
+	log := u.log.With(
+		slog.String("op", op),
+		slog.String("username", username),
+	)
+
+	log.Info("getting user information")
+
+	info, err := u.userService.GetProfile(ctx, username)
+	if err != nil {
+		if errors.Is(err, storage.ErrUserNotFound) {
+			log.Error("user not found", sl.Err(err))
+
+			return nil, fmt.Errorf("%s: %w", op, ErrUserNotFound)
+		}
+
+		log.Error("failed to get profile", sl.Err(err))
 
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}

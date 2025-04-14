@@ -10,7 +10,6 @@ export const checkUniqueUsername = async (
     .json()
     .then((res) => res.isUnique)
     .catch(() => {
-      console.log("Failed to check username");
       return false;
     });
 };

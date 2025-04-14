@@ -1,41 +1,44 @@
-import { NAVIGATION } from "@/shared/navigation";
 import { cn } from "@/shared/utils/cn";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Skeleton } from "@heroui/skeleton";
 import { FormHTMLAttributes } from "react";
-import { useLocation } from "wouter";
 import { useEditProfileForm } from "../model/use-edit-profile-form";
 
-type EditProfileFormProps = FormHTMLAttributes<HTMLFormElement> & {};
+type EditProfileFormProps = FormHTMLAttributes<HTMLFormElement> & {
+  onSuccess?: () => void;
+  onError?: () => void;
+};
 
 export const EditProfileForm = ({
   className,
+  onSuccess,
+  onError,
   ...props
 }: EditProfileFormProps) => {
-  const setLocation = useLocation()[1];
-
   const {
     formData,
     handleUsernameChange,
     handleEmailChange,
     handleSubmit,
-    isPending,
-    mutationState,
+    fetchingQueryState,
+    updatingMutationState,
     errors,
     reset,
   } = useEditProfileForm({
-    onSuccess: () => {
-      setLocation(NAVIGATION.profile);
-    },
+    onSuccess,
+    onError,
   });
 
   const isValidUsername = !errors.username.length;
   const isValidEmail = !errors.email.length;
+  const isInputsDisabled = updatingMutationState.isPending;
   const isSubmitDisabled =
-    !isValidUsername || !isValidEmail || isPending || mutationState.isPending;
-  const isInputsDisabled = mutationState.isPending;
+    !isValidUsername ||
+    !isValidEmail ||
+    fetchingQueryState.isPending ||
+    updatingMutationState.isPending;
 
   const usernameInputValidIcon = isValidUsername ? (
     <CheckCircleIcon className="w-6 h-6 text-green-500" />
@@ -46,7 +49,10 @@ export const EditProfileForm = ({
   return (
     <form {...props} onSubmit={handleSubmit} className={cn("", className)}>
       <div className="flex flex-col gap-3">
-        <Skeleton className="rounded-medium" isLoaded={!isPending}>
+        <Skeleton
+          className="rounded-medium"
+          isLoaded={!fetchingQueryState.isPending}
+        >
           <Input
             label="Username"
             value={formData.username}
@@ -67,7 +73,10 @@ export const EditProfileForm = ({
           />
         </Skeleton>
 
-        <Skeleton className="rounded-medium" isLoaded={!isPending}>
+        <Skeleton
+          className="rounded-medium"
+          isLoaded={!fetchingQueryState.isPending}
+        >
           <Input
             label="Email"
             value={formData.email}

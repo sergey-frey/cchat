@@ -5,3 +5,9 @@ export type UpdateUserDto = {
   previous_password?: string;
   username?: string;
 };
+
+export type SearchUsersDto = {
+  username: string;
+  limit?: number;
+  pagination?: number;
+};

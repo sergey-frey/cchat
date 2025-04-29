@@ -13,3 +13,12 @@ export type IUpdateUserResponse = IResponse<{
   email: string;
   name: string;
 }>;
+
+export type ISearchUsersResponse = IResponse<
+  Array<{
+    id: string;
+    username: string;
+    email: string;
+    name: string;
+  }>
+>;

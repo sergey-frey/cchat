@@ -1,7 +1,12 @@
 import { userApi } from "@/shared/api/instance/instance";
 import { queryClient } from "@/shared/query-client";
-import { useMutation, useQuery, UseQueryOptions } from "@tanstack/react-query";
-import { UpdateUserDto } from "../types/dto";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  UseQueryOptions,
+} from "@tanstack/react-query";
+import { SearchUsersDto, UpdateUserDto } from "../types/dto";
 import { IUserProfileResponse } from "../types/responses";
 import { userService } from "./user-service";
 
@@ -39,5 +44,32 @@ export const useUpdateProfileQuery = () => {
     onSuccess: (data) => {
       queryClient.setQueryData(["profile"], data);
     },
+  });
+};
+
+export const useSearchUsersQuery = ({ username, limit }: SearchUsersDto) => {
+  return useInfiniteQuery({
+    queryKey: ["users-search"],
+    queryFn: async ({ signal, pageParam }) => {
+      const res = await userService.searchUsers(
+        {
+          username,
+          limit,
+          pagination: pageParam as number,
+        },
+        { signal },
+      );
+
+      return res.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _, lastPageParam) => {
+      if (lastPage.length === 0) {
+        return undefined;
+      }
+
+      return (lastPageParam as number) + 1;
+    },
+    select: (data) => data.pages.flat(),
   });
 };

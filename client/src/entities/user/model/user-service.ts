@@ -1,8 +1,12 @@
 import { API_ENDPOINTS } from "@/shared/api/constants/endpoints";
 import { userApi } from "@/shared/api/instance/instance";
 import { KyInstance } from "ky";
-import { UpdateUserDto } from "../types/dto";
-import { IUpdateUserResponse, IUserProfileResponse } from "../types/responses";
+import { SearchUsersDto, UpdateUserDto } from "../types/dto";
+import {
+  ISearchUsersResponse,
+  IUpdateUserResponse,
+  IUserProfileResponse,
+} from "../types/responses";
 
 class UserService {
   private _instance: KyInstance;
@@ -28,6 +32,29 @@ class UserService {
       API_ENDPOINTS.USER.UPDATE,
       {
         json: updateData,
+      },
+    );
+
+    if (response.ok) {
+      return await response.json();
+    }
+
+    throw new Error(response.statusText);
+  }
+
+  async searchUsers(
+    { username, limit, pagination }: SearchUsersDto,
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await this._instance.get<ISearchUsersResponse>(
+      API_ENDPOINTS.USER.SEARCH,
+      {
+        searchParams: {
+          username,
+          ...(limit ? { limit: limit.toString() } : {}),
+          ...(pagination ? { pagination: pagination.toString() } : {}),
+        },
+        signal,
       },
     );
 

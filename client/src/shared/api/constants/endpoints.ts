@@ -8,5 +8,6 @@ export const API_ENDPOINTS = {
   USER: {
     PROFILE: "myprofile",
     UPDATE: "update",
+    SEARCH: "search",
   },
 };

@@ -128,7 +128,7 @@ export const CreateChatPage = () => {
         </Button>
       </section>
 
-      <BottomNavigation className="fixed bottom-4 left-1/2 -translate-x-1/2" />
+      <BottomNavigation />
     </>
   );
 };

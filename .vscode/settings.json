@@ -1,3 +1,4 @@
 {
-	"folderTemplates.templateFolderPath": "client/.fttemplates"
+	"folderTemplates.templateFolderPath": "client/.fttemplates",
+	"cSpell.words": ["heroui", "wouter"]
 }

@@ -19,4 +19,6 @@ export const NAVIGATION = {
   editProfile: "~/app/profile/edit",
   chats: (id?: string) => (id ? `~/app/chats/${id}` : "~/app/chats"),
   createChat: "~/app/chats/create",
+  channels: () => "~/app/channels",
+  settings: () => "~/app/settings",
 };

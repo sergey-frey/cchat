@@ -55,6 +55,7 @@ export const ProfilePage = () => {
                   size="sm"
                   color="danger"
                   title="Logout"
+                  variant="flat"
                   onPress={handleLogoutClick}
                 >
                   <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
@@ -73,7 +74,7 @@ export const ProfilePage = () => {
         </Card>
       </section>
 
-      <BottomNavigation className="fixed bottom-4 left-1/2 -translate-x-1/2" />
+      <BottomNavigation />
     </>
   );
 };

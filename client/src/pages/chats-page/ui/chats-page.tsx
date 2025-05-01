@@ -24,14 +24,14 @@ export const ChatsPage = () => {
             href={NAVIGATION.createChat}
             state={{ origin: NAVIGATION.chats() }}
           >
-            <Button as={Link} isIconOnly color="primary">
+            <Button as={Link} variant="flat" isIconOnly color="primary">
               <PlusCircleIcon className="w-6 h-6" />
             </Button>
           </Link>
         </div>
       </section>
 
-      <BottomNavigation className="fixed bottom-4 left-1/2 -translate-x-1/2" />
+      <BottomNavigation />
     </>
   );
 };

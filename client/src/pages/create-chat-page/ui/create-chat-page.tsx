@@ -34,6 +34,7 @@ export const CreateChatPage = () => {
     hasNextUsersPage,
     isShowCreateChatButton,
     fetchUsersError,
+    isShowPlaceholders,
     paginationTriggerRef,
     debouncedRefetchUsers,
   } = useCreateChat({ search, chatMembers });
@@ -51,7 +52,7 @@ export const CreateChatPage = () => {
   return (
     <section className="p-4 pt-0 relative">
       <motion.div
-        className={cn("pt-4 pb-2 sticky top-0", "bg-white border-b")}
+        className={cn("pt-4 pb-2 sticky top-0 z-10", "bg-white border-b")}
         {...CREATE_CHAT_PAGE_ANIMATIONS.HEADER}
       >
         <div className="flex gap-2">
@@ -119,10 +120,17 @@ export const CreateChatPage = () => {
                     "bg-gradient-to-r from-transparent to-slate-200",
                 )}
               >
-                <UserItem.Avatar />
+                <UserItem.Avatar isLoaded={!isShowPlaceholders} />
                 <UserItem.Content>
-                  <UserItem.Name>{user.name}</UserItem.Name>
-                  <UserItem.Username>@{user.username}</UserItem.Username>
+                  <UserItem.Name isLoaded={!isShowPlaceholders}>
+                    {user.name}
+                  </UserItem.Name>
+                  <UserItem.Username
+                    className="mt-0.5"
+                    isLoaded={!isShowPlaceholders}
+                  >
+                    @{user.username}
+                  </UserItem.Username>
                 </UserItem.Content>
               </UserItem>
               {isNeedRenderPaginationTrigger && (

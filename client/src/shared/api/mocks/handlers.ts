@@ -10,7 +10,7 @@ const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const users = faker.helpers.multiple(generateRandomUser, { count: 10000 });
 
 mockApi.get("user/search", async ({ request }) => {
-  await delay(500);
+  await delay(1000);
 
   const searchParams = new URL(request.url).searchParams;
 

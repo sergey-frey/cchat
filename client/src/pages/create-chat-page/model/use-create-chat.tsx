@@ -4,6 +4,7 @@ import { Spinner } from "@heroui/spinner";
 import debounce from "debounce";
 import { useCallback } from "react";
 import { CREATE_CHAT_SEARCH_LIMIT } from "../constants";
+import { PLACEHOLDER_USERS } from "../constants/placeholder";
 
 type UseCreateChatOptions = {
   search: string;
@@ -18,15 +19,21 @@ export const useCreateChat = ({
     data: users,
     isPending: isSearchPending,
     isRefetching: isSearchRefetching,
+    isPlaceholderData: isSearchPlaceholderData,
     refetch: refetchUsers,
     fetchNextPage: fetchNextUsersPage,
     hasNextPage: hasNextUsersPage,
     isFetchingNextPage: isFetchingNextUsersPage,
     error: fetchUsersError,
-  } = useSearchUsersQuery({
-    username: search,
-    limit: CREATE_CHAT_SEARCH_LIMIT,
-  });
+  } = useSearchUsersQuery(
+    {
+      username: search,
+      limit: CREATE_CHAT_SEARCH_LIMIT,
+    },
+    {
+      placeholderData: PLACEHOLDER_USERS,
+    },
+  );
 
   const paginationTriggerRef = useIntersection<HTMLDivElement>({
     onIntersect: fetchNextUsersPage,
@@ -46,6 +53,8 @@ export const useCreateChat = ({
 
   const isShowCreateChatButton = chatMembers.length > 0;
 
+  const isShowPlaceholders = isSearchPlaceholderData || isSearchRefetching;
+
   return {
     users,
     hasNextUsersPage,
@@ -54,5 +63,6 @@ export const useCreateChat = ({
     searchInputEndContent,
     isShowCreateChatButton,
     fetchUsersError,
+    isShowPlaceholders,
   };
 };

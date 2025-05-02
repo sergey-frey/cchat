@@ -1,13 +1,14 @@
 import { userApi } from "@/shared/api/instance/instance";
 import { queryClient } from "@/shared/query-client";
 import {
+  InfiniteData,
   useInfiniteQuery,
   useMutation,
   useQuery,
   UseQueryOptions,
 } from "@tanstack/react-query";
 import { SearchUsersDto, UpdateUserDto } from "../types/dto";
-import { IUserProfileResponse } from "../types/responses";
+import { ISearchUsersResponse, IUserProfileResponse } from "../types/responses";
 import { userService } from "./user-service";
 
 export const useProfileQuery = (
@@ -47,7 +48,14 @@ export const useUpdateProfileQuery = () => {
   });
 };
 
-export const useSearchUsersQuery = ({ username, limit }: SearchUsersDto) => {
+export const useSearchUsersQuery = (
+  { username, limit }: SearchUsersDto,
+  {
+    placeholderData,
+  }: {
+    placeholderData?: InfiniteData<ISearchUsersResponse["data"], number>;
+  } = {},
+) => {
   return useInfiniteQuery({
     queryKey: ["users-search"],
     queryFn: async ({ signal, pageParam }) => {
@@ -70,6 +78,7 @@ export const useSearchUsersQuery = ({ username, limit }: SearchUsersDto) => {
 
       return (lastPageParam as number) + 1;
     },
-    select: (data) => data.pages.flat(),
+    select: (data) => {console.log(data);return data.pages.flat()},
+    placeholderData,
   });
 };

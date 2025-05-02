@@ -74,14 +74,16 @@ export const CreateChatPage = () => {
           endContent={
             <>
               {isShowCreateChatButton && (
-                <Button
-                  size="sm"
-                  color="primary"
-                  className="rounded-full"
-                  isIconOnly
-                >
-                  <ArrowRightIcon className="w-5 h-5" />
-                </Button>
+                <motion.div {...CREATE_CHAT_PAGE_ANIMATIONS.CREATE_CHAT_BUTTON}>
+                  <Button
+                    size="sm"
+                    color="primary"
+                    className="rounded-full"
+                    isIconOnly
+                  >
+                    <ArrowRightIcon className="w-5 h-5" />
+                  </Button>
+                </motion.div>
               )}
             </>
           }

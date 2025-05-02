@@ -1,6 +1,8 @@
 import { IUser, UserBadge } from "@/entities/user";
 import { TrashIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
 import { twJoin } from "tailwind-merge";
+import { CREATE_CHAT_PAGE_ANIMATIONS } from "../constants/animations";
 
 type ChatMemberBadgeProps = {
   user: IUser;
@@ -9,7 +11,11 @@ type ChatMemberBadgeProps = {
 
 export const ChatMemberBadge = ({ user, onClick }: ChatMemberBadgeProps) => {
   return (
-    <button className="inline" onClick={onClick}>
+    <motion.button
+      className="inline"
+      onClick={onClick}
+      {...CREATE_CHAT_PAGE_ANIMATIONS.CHAT_MEMBER_BADGE}
+    >
       <UserBadge
         className={twJoin("group", "hover:bg-red-200 hover:border-red-400")}
       >
@@ -30,6 +36,6 @@ export const ChatMemberBadge = ({ user, onClick }: ChatMemberBadgeProps) => {
           <XCircleIcon className="w-5 h-5" />
         </UserBadge.EndContent>
       </UserBadge>
-    </button>
+    </motion.button>
   );
 };

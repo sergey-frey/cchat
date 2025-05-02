@@ -9,12 +9,6 @@ const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 const users = faker.helpers.multiple(generateRandomUser, { count: 10000 });
 
-mockApi.get("user/check-username", () => {
-  return HttpResponse.json({
-    isUnique: Math.random() > 0.5,
-  });
-});
-
 mockApi.get("user/search", async ({ request }) => {
   await delay(500);
 

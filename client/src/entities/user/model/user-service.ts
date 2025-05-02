@@ -3,10 +3,12 @@ import { userApi } from "@/shared/api/instance/instance";
 import { KyInstance } from "ky";
 import { SearchUsersDto, UpdateUserDto } from "../types/dto";
 import {
+  IGetUserByUsernameResponse,
   ISearchUsersResponse,
   IUpdateUserResponse,
   IUserProfileResponse,
 } from "../types/responses";
+import { IUser } from "../types";
 
 class UserService {
   private _instance: KyInstance;
@@ -17,7 +19,7 @@ class UserService {
 
   async getProfile(): Promise<IUserProfileResponse> {
     const response = await this._instance.get<IUserProfileResponse>(
-      API_ENDPOINTS.USER.PROFILE,
+      API_ENDPOINTS.USER.MY_PROFILE,
     );
 
     if (response.ok) {
@@ -40,6 +42,18 @@ class UserService {
     }
 
     throw new Error(response.statusText);
+  }
+
+  async getByUsername(username: IUser["username"]) {
+    const response = await this._instance.get<IGetUserByUsernameResponse>(
+      API_ENDPOINTS.USER.profile(username),
+    );
+
+    if (response.ok) {
+      return await response.json();
+    }
+
+    throw response;
   }
 
   async searchUsers(

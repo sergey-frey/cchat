@@ -1,3 +1,5 @@
+import urlJoin from "url-join";
+
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: "login",
@@ -6,7 +8,8 @@ export const API_ENDPOINTS = {
     SESSION: "session",
   },
   USER: {
-    PROFILE: "myprofile",
+    MY_PROFILE: "myprofile",
+    profile: (username: string) => urlJoin("profile", username),
     UPDATE: "update",
     SEARCH: "search",
   },

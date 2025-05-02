@@ -9,7 +9,7 @@ const initialFormState: EditProfileFormSchema = {
   email: "",
 };
 
-type ValidationErrors = Record<keyof EditProfileFormSchema, string[]>;
+export type ValidationErrors = Record<keyof EditProfileFormSchema, string[]>;
 
 type UseEditProfileFormOptions = {
   onSuccess?: () => void;

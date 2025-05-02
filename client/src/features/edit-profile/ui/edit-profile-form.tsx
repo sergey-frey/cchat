@@ -1,9 +1,11 @@
-import { cn } from "@/shared/utils/cn";
-import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+// Dependencies
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Skeleton } from "@heroui/skeleton";
 import { FormHTMLAttributes } from "react";
+
+import { cn } from "@/shared/utils/cn";
+import { useEditProfileControlsStates } from "../model/use-edit-profile-controls-states";
 import { useEditProfileForm } from "../model/use-edit-profile-form";
 
 type EditProfileFormProps = FormHTMLAttributes<HTMLFormElement> & {
@@ -31,20 +33,17 @@ export const EditProfileForm = ({
     onError,
   });
 
-  const isValidUsername = !errors.username.length;
-  const isValidEmail = !errors.email.length;
-  const isInputsDisabled = updatingMutationState.isPending;
-  const isSubmitDisabled =
-    !isValidUsername ||
-    !isValidEmail ||
-    fetchingQueryState.isPending ||
-    updatingMutationState.isPending;
-
-  const usernameInputValidIcon = isValidUsername ? (
-    <CheckCircleIcon className="w-6 h-6 text-green-500" />
-  ) : (
-    <XCircleIcon className="w-6 h-6 text-red-500" />
-  );
+  const {
+    isInputsDisabled,
+    isSubmitDisabled,
+    isValidEmail,
+    isValidUsername,
+    usernameInputValidIcon,
+  } = useEditProfileControlsStates({
+    errors,
+    updatingMutationState,
+    fetchingQueryState,
+  });
 
   return (
     <form {...props} onSubmit={handleSubmit} className={cn("", className)}>
@@ -103,7 +102,7 @@ export const EditProfileForm = ({
         >
           Save
         </Button>
-        <Button type="button" color="default" onPress={reset}>
+        <Button type="button" color="default" variant="flat" onPress={reset}>
           Reset
         </Button>
       </div>

@@ -1,15 +1,15 @@
-import { userApi } from "@/shared/api/instance/instance";
+import { IGetUserByUsernameResponse, userService } from "@/entities/user";
+import { KyResponse } from "ky";
 
 export const checkUniqueUsername = async (
   username: string,
 ): Promise<boolean> => {
-  return userApi
-    .get<{ isUnique: boolean }>("check-username", {
-      searchParams: { username },
+  return userService
+    .getByUsername(username)
+    .then((response) => {
+      return response.status === 404;
     })
-    .json()
-    .then((res) => res.isUnique)
-    .catch(() => {
-      return false;
+    .catch((response: KyResponse<IGetUserByUsernameResponse>) => {
+      return response.status === 404;
     });
 };

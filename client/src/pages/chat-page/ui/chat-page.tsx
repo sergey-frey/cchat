@@ -1,5 +1,5 @@
-import { userSelector, useUserStore } from "@/entities/user";
 import { MessageBubble, MessageRow, useChat } from "@/features/chat";
+import { useProfileQuery } from "@/entities/user";
 import { NAVIGATION } from "@/shared/navigation";
 import { cn } from "@/shared/utils/cn";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
@@ -10,7 +10,7 @@ import { Navigation } from "./navigation";
 import { SendMessageForm } from "./send-message-form";
 
 export const ChatPage = () => {
-  const user = useUserStore(userSelector);
+  const profileQuery = useProfileQuery();
   const { chatId } = useParams();
   const { messages, methods } = useChat({
     chatId: chatId ?? "",
@@ -24,7 +24,7 @@ export const ChatPage = () => {
       <section className="grow">
         <MessagesList>
           {messages.map((message, i) => {
-            const isOwn = user?.id === message.author.id;
+            const isOwn = profileQuery.data?.id === message.author.id;
 
             let isBlockStart = true;
             let isBlockEnd = true;

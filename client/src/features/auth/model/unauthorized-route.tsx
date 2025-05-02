@@ -1,3 +1,4 @@
+import { ReactNode, useState } from "react";
 import { Redirect, Route, RouteProps } from "wouter";
 import { useCheckAuth } from "./use-check-auth";
 
@@ -9,15 +10,12 @@ export const UnauthorizedRoute = ({
   redirectPath,
   ...props
 }: UnauthorizedRouteProps) => {
-  const authCheckResponse = useCheckAuth();
+  const [routeComponent, setRouteComponent] = useState<ReactNode>(null);
 
-  if (authCheckResponse === undefined) {
-    return null;
-  }
+  useCheckAuth({
+    onSuccess: () => setRouteComponent(<Redirect to={redirectPath} />),
+    onError: () => setRouteComponent(<Route {...props} />),
+  });
 
-  if (authCheckResponse) {
-    return <Redirect to={redirectPath} />;
-  }
-
-  return <Route {...props} />;
+  return routeComponent;
 };

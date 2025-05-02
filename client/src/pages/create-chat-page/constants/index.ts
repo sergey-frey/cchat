@@ -1,0 +1,1 @@
+export const CREATE_CHAT_SEARCH_LIMIT = 50;

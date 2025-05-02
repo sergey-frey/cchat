@@ -1,50 +1,46 @@
-import { HttpResponse, http } from "msw";
+import { faker } from "@faker-js/faker";
+import { HttpResponse } from "msw";
+import { generateRandomUser } from "./faker";
+import { MockAPI } from "./mock-api";
 
-let isAuthorized = false;
+export const mockApi = new MockAPI("http://localhost:8040/cchat");
 
-const loginResolver = () => {
-  isAuthorized = true;
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
+const users = faker.helpers.multiple(generateRandomUser, { count: 10000 });
+
+mockApi.get("user/check-username", () => {
   return HttpResponse.json({
-    id: "1",
-    username: "@admin",
-    email: "admin@test.com",
+    isUnique: Math.random() > 0.5,
   });
-};
+});
 
-const sessionResolver = () => {
-  if (!isAuthorized) {
-    return HttpResponse.json(null, {
-      status: 401,
-    });
+mockApi.get("user/search", async ({ request }) => {
+  await delay(500);
+
+  const searchParams = new URL(request.url).searchParams;
+
+  const username = searchParams.get("username");
+  const limit = searchParams.get("limit");
+  const pagination = searchParams.get("pagination");
+
+  let filteredUsers = users.filter((user) => {
+    return user.username.startsWith(username as string);
+  });
+
+  if (!username) {
+    filteredUsers = users;
+  }
+
+  if (limit && pagination) {
+    filteredUsers = filteredUsers.slice(
+      (Number(pagination) - 1) * Number(limit),
+      Number(pagination) * Number(limit),
+    );
   }
 
   return HttpResponse.json({
-    id: "1",
-    username: "@admin",
-    email: "admin@test.com",
+    status: 200,
+    data: filteredUsers,
   });
-};
-
-const logoutResolver = () => {
-  isAuthorized = false;
-
-  return HttpResponse.json({ message: "Logout successfully" });
-};
-
-const loginHandler = http.post(
-  "http://localhost:3000/auth/login",
-  loginResolver,
-);
-
-const sessionHandler = http.post(
-  "http://localhost:3000/auth/session",
-  sessionResolver,
-);
-
-const logoutHandler = http.get(
-  "http://localhost:3000/auth/logout",
-  logoutResolver,
-);
-
-export const handlers = [loginHandler, sessionHandler, logoutHandler];
+});

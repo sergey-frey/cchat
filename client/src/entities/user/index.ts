@@ -1,3 +1,9 @@
 export * from "./model/queries";
-export { useUserStore } from "./model/user-store";
-export * from "./model/user-store-selectors";
+export type { IUser } from "./types";
+export type { UpdateUserDto } from "./types/dto";
+export type {
+  IUserProfileResponse,
+  ISearchUsersResponse,
+} from "./types/responses";
+export { UserBadge } from "./ui/user-badge";
+export { UserItem } from "./ui/user-item";

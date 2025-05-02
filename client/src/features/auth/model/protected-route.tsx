@@ -3,15 +3,19 @@ import { Redirect, Route, RouteProps } from "wouter";
 import { useCheckAuth } from "./use-check-auth";
 
 export const ProtectedRoute = ({ ...props }: RouteProps) => {
-  const authCheckResponse = useCheckAuth();
+  const isAuthenticated = useCheckAuth();
 
-  if (authCheckResponse === null) {
+  if (isAuthenticated === null) {
     return (
-      <Redirect to={NAVIGATION.auth({ searchParams: { state: "login" } })} />
+      <Redirect
+        to={NAVIGATION.auth({
+          searchParams: { state: "login" },
+        })}
+      />
     );
   }
 
-  if (authCheckResponse) {
+  if (isAuthenticated) {
     return <Route {...props} />;
   }
 };

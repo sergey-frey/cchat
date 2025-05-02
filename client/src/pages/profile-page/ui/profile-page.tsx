@@ -1,41 +1,75 @@
-import { userSelector, useUserStore } from "@/entities/user";
+import { useProfileQuery } from "@/entities/user";
 import { authService, useLogout } from "@/features/auth";
-import { BottomNavigation } from "@/features/navigation";
-import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
+import { NAVIGATION } from "@/shared/navigation";
+import { useConfirm } from "@/shared/utils/confirm";
+import {
+  ArrowRightStartOnRectangleIcon,
+  PencilSquareIcon,
+} from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Divider } from "@heroui/divider";
+import { Link } from "wouter";
 
 export const ProfilePage = () => {
-  const user = useUserStore(userSelector);
+  const profileQuery = useProfileQuery();
   const logout = useLogout();
+  const confirm = useConfirm({
+    content: "Are you sure you want to logout?",
+  });
 
-  if (!user) return null;
+  if (!profileQuery.isSuccess) return null;
 
-  const { username } = user;
+  const { username, email } = profileQuery.data;
 
-  const handleLogoutClick = () => {
-    authService.logout().then(logout);
-  };
+  const handleLogoutClick = confirm((closeConfirm) => {
+    authService.logout().then(logout).finally(closeConfirm);
+  });
 
   return (
-    <>
-      <section className="p-4">
-        <h1 className="text-2xl text-indigo-500 text-center mt-10">
+    <section className="h-full flex items-center justify-center p-4">
+      <Card className="w-full max-w-[340px] mx-auto">
+        <CardHeader className="text-primary-400">
           {username}
-        </h1>
 
-        <div className="mt-4">
-          <Button
-            isIconOnly
-            color="danger"
-            title="Logout"
-            onPress={handleLogoutClick}
-          >
-            <ArrowRightStartOnRectangleIcon className="w-5 h-5" />
-          </Button>
-        </div>
-      </section>
+          <ul className="ml-auto flex gap-2">
+            <li>
+              <Link
+                asChild
+                href={NAVIGATION.editProfile}
+                state={{ origin: NAVIGATION.profile }}
+              >
+                <Button as={Link} isIconOnly size="sm" variant="flat">
+                  <PencilSquareIcon className="w-4 h-4" />
+                </Button>
+              </Link>
 
-      <BottomNavigation className="fixed bottom-4 left-1/2 -translate-x-1/2" />
-    </>
+              <Link href="/" state={{ origin: NAVIGATION.editProfile }} />
+            </li>
+
+            <li>
+              <Button
+                isIconOnly
+                size="sm"
+                color="danger"
+                title="Logout"
+                variant="flat"
+                onPress={handleLogoutClick}
+              >
+                <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
+              </Button>
+            </li>
+          </ul>
+        </CardHeader>
+
+        <Divider />
+
+        <CardBody>
+          <ul className="text-base">
+            <li>{email}</li>
+          </ul>
+        </CardBody>
+      </Card>
+    </section>
   );
 };

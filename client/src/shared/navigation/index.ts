@@ -16,6 +16,9 @@ const withSearchParams = (navigationFn: (args: unknown) => string) => {
 export const NAVIGATION = {
   auth: withSearchParams(() => `~/auth`),
   profile: "~/app/profile",
+  editProfile: "~/app/profile/edit",
   chats: (id?: string) => (id ? `~/app/chats/${id}` : "~/app/chats"),
   createChat: "~/app/chats/create",
+  channels: () => "~/app/channels",
+  settings: () => "~/app/settings",
 };

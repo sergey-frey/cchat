@@ -1,4 +1,3 @@
-import { BottomNavigation } from "@/features/navigation";
 import { NAVIGATION } from "@/shared/navigation";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
@@ -14,24 +13,20 @@ export const ChatsPage = () => {
   };
 
   return (
-    <>
-      <section className="p-4 pt-14">
-        <div className="flex gap-2 items-center">
-          <ChatsSearch onSubmitSearch={handleSearchSubmit} className="grow" />
+    <section className="p-4 pt-14">
+      <div className="flex gap-2 items-center">
+        <ChatsSearch onSubmitSearch={handleSearchSubmit} className="grow" />
 
-          <Link
-            asChild
-            href={NAVIGATION.createChat}
-            state={{ origin: NAVIGATION.chats() }}
-          >
-            <Button as={Link} variant="flat" isIconOnly color="primary">
-              <PlusCircleIcon className="w-6 h-6" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      <BottomNavigation />
-    </>
+        <Link
+          asChild
+          href={NAVIGATION.createChat}
+          state={{ origin: NAVIGATION.chats() }}
+        >
+          <Button as={Link} variant="flat" isIconOnly color="primary">
+            <PlusCircleIcon className="w-6 h-6" />
+          </Button>
+        </Link>
+      </div>
+    </section>
   );
 };

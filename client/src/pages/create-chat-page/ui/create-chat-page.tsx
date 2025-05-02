@@ -33,6 +33,7 @@ export const CreateChatPage = () => {
     searchInputEndContent,
     hasNextUsersPage,
     isShowCreateChatButton,
+    fetchUsersError,
     paginationTriggerRef,
     debouncedRefetchUsers,
   } = useCreateChat({ search, chatMembers });
@@ -100,6 +101,7 @@ export const CreateChatPage = () => {
         users={users ?? []}
         hasNextUsersPage={hasNextUsersPage}
         selectedUsers={chatMembers}
+        error={fetchUsersError}
       >
         {({ user, isNeedRenderPaginationTrigger, isSelected }) => {
           return (

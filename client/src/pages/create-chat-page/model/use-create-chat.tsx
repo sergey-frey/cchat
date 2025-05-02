@@ -22,6 +22,7 @@ export const useCreateChat = ({
     fetchNextPage: fetchNextUsersPage,
     hasNextPage: hasNextUsersPage,
     isFetchingNextPage: isFetchingNextUsersPage,
+    error: fetchUsersError,
   } = useSearchUsersQuery({
     username: search,
     limit: CREATE_CHAT_SEARCH_LIMIT,
@@ -52,5 +53,6 @@ export const useCreateChat = ({
     paginationTriggerRef,
     searchInputEndContent,
     isShowCreateChatButton,
+    fetchUsersError,
   };
 };

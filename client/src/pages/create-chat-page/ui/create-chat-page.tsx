@@ -11,6 +11,7 @@ import { NavigationOriginState } from "@/shared/types/navigation";
 import {
   containerRefSelector,
   useAppContainer,
+  useAppContainerScroll,
 } from "@/shared/utils/app-container";
 import { cn } from "@/shared/utils/cn";
 import { useArrayState } from "@/shared/utils/use-array-state";
@@ -39,6 +40,8 @@ export const CreateChatPage = () => {
     debouncedRefetchUsers,
   } = useCreateChat({ search, chatMembers });
 
+  const { scroll } = useAppContainerScroll();
+
   const handleSearchChange = (value: string) => {
     setSearch(value);
     debouncedRefetchUsers();
@@ -52,7 +55,12 @@ export const CreateChatPage = () => {
   return (
     <section className="p-4 pt-0 relative">
       <motion.div
-        className={cn("pt-4 pb-2 sticky top-0 z-10", "bg-white border-b")}
+        className={cn(
+          "pt-4 pb-4 sticky top-0 z-10",
+          "bg-white border-b border-transparent transition-colors",
+          scroll > 0 && "border-foreground-300",
+          chatMembers.length > 0 && "pb-2 border-foreground-300",
+        )}
         {...CREATE_CHAT_PAGE_ANIMATIONS.HEADER}
       >
         <div className="flex gap-2">

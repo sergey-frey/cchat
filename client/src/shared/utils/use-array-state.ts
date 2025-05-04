@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useState } from "react";
 
-type UseArrayStateMethods<T> = {
+export type UseArrayStateMethods<T> = {
   setState: Dispatch<SetStateAction<T[]>>;
   push: (item: T) => void;
   pushUnique: (item: T) => void;

@@ -1,5 +1,6 @@
 import { IUser, UserBadge } from "@/entities/user";
 import { TrashIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import { cn } from "@heroui/theme";
 import { motion } from "framer-motion";
 import { twJoin } from "tailwind-merge";
 import { CREATE_CHAT_PAGE_ANIMATIONS } from "../constants/animations";
@@ -17,19 +18,23 @@ export const ChatMemberBadge = ({ user, onClick }: ChatMemberBadgeProps) => {
       {...CREATE_CHAT_PAGE_ANIMATIONS.CHAT_MEMBER_BADGE}
     >
       <UserBadge
-        className={twJoin("group", "hover:bg-red-200 hover:border-red-400")}
+        className={twJoin(
+          "group transition-colors",
+          "hover:bg-red-200 hover:border-red-400",
+        )}
       >
-        <UserBadge.Avatar className="group-hover:hidden" />
-        <UserBadge.AvatarPlaceholder
-          className={twJoin(
-            "hidden bg-red-400",
-            "relative",
-            "group-hover:inline",
-          )}
+        <UserBadge.Avatar
+          className={cn("relative transition-colors", "group-hover:bg-red-400")}
         >
-          <TrashIcon className="abs-center w-4 h-4" />
-        </UserBadge.AvatarPlaceholder>
-        <UserBadge.Username className="group-hover:text-black">
+          <TrashIcon
+            className={cn(
+              "abs-center w-4 h-4",
+              "scale-75 opacity-0 transition-all",
+              "group-hover:scale-100 group-hover:opacity-100",
+            )}
+          /> 
+        </UserBadge.Avatar>
+        <UserBadge.Username className="transition-colors group-hover:text-black">
           @{user.username}
         </UserBadge.Username>
         <UserBadge.EndContent className="lg:hidden">

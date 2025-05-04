@@ -6,20 +6,17 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { Link } from "wouter";
 
-import { IUser, UserItem } from "@/entities/user";
+import { IUser } from "@/entities/user";
 import { NavigationOriginState } from "@/shared/types/navigation";
-import {
-  containerRefSelector,
-  useAppContainer,
-  useAppContainerScroll,
-} from "@/shared/utils/app-container";
 import { cn } from "@/shared/utils/cn";
 import { useArrayState } from "@/shared/utils/use-array-state";
 import { useLocationState } from "@/shared/utils/use-location-state";
 import { CREATE_CHAT_PAGE_ANIMATIONS } from "../constants/animations";
 import { useCreateChat } from "../model/use-create-chat";
+import { useCreateChatHandlers } from "../model/use-create-chat-handlers";
 import { ChatMemberBadge } from "./chat-member-badge";
 import { ChatMembers } from "./chat-members";
+import { CreateChatUserItem } from "./create-chat-user-item";
 import { ScrollTopButton } from "./scroll-top-button";
 import { SearchUsersList } from "./search-users-list";
 
@@ -27,7 +24,6 @@ export const CreateChatPage = () => {
   const { state } = useLocationState<NavigationOriginState>();
   const [search, setSearch] = useState("");
   const [chatMembers, chatMembersMethods] = useArrayState<IUser>([]);
-  const containerRef = useAppContainer(containerRefSelector);
 
   const {
     users,
@@ -36,29 +32,19 @@ export const CreateChatPage = () => {
     isShowCreateChatButton,
     fetchUsersError,
     isShowPlaceholders,
+    isShowScrollDivider,
+    isChatMembersDirty,
     paginationTriggerRef,
     debouncedRefetchUsers,
   } = useCreateChat({ search, chatMembers });
 
-  const { scroll } = useAppContainerScroll();
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    debouncedRefetchUsers();
-  };
-
-  const handleScrollTopClick = () => {
-    if (!containerRef?.current) return;
-    containerRef.current.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleUserClick = (user: IUser) => {
-    if (chatMembers.includes(user)) {
-      chatMembersMethods.remove(user);
-    } else {
-      chatMembersMethods.pushUnique(user);
-    }
-  };
+  const { handleScrollTopClick, handleSearchChange, handleUserClick } =
+    useCreateChatHandlers({
+      setSearch,
+      debouncedRefetchUsers,
+      chatMembers,
+      chatMembersMethods,
+    });
 
   return (
     <section className="p-4 pt-0 relative">
@@ -66,8 +52,8 @@ export const CreateChatPage = () => {
         className={cn(
           "pt-4 pb-4 sticky top-0 z-10",
           "bg-white border-b border-transparent transition-colors",
-          scroll > 0 && "border-foreground-300",
-          chatMembers.length > 0 && "pb-2 border-foreground-300",
+          isShowScrollDivider && "border-foreground-300",
+          isChatMembersDirty && "pb-2 border-foreground-300",
         )}
         {...CREATE_CHAT_PAGE_ANIMATIONS.HEADER}
       >
@@ -124,35 +110,17 @@ export const CreateChatPage = () => {
       >
         {({ user, isNeedRenderPaginationTrigger, isSelected }) => {
           return (
-            <button
-              key={user.id}
-              className="text-start"
-              onClick={() => handleUserClick(user)}
-            >
-              <UserItem
-                className={cn(
-                  "py-1.5",
-                  isSelected &&
-                    "bg-gradient-to-r from-transparent to-slate-200",
-                )}
-              >
-                <UserItem.Avatar isLoaded={!isShowPlaceholders} />
-                <UserItem.Content>
-                  <UserItem.Name isLoaded={!isShowPlaceholders}>
-                    {user.name}
-                  </UserItem.Name>
-                  <UserItem.Username
-                    className="mt-0.5"
-                    isLoaded={!isShowPlaceholders}
-                  >
-                    @{user.username}
-                  </UserItem.Username>
-                </UserItem.Content>
-              </UserItem>
-              {isNeedRenderPaginationTrigger && (
-                <div ref={paginationTriggerRef}></div>
-              )}
-            </button>
+            <CreateChatUserItem
+              user={user}
+              isSelected={isSelected}
+              isShowPlaceholders={isShowPlaceholders}
+              onClick={handleUserClick}
+              endContent={
+                isNeedRenderPaginationTrigger && (
+                  <div ref={paginationTriggerRef} />
+                )
+              }
+            />
           );
         }}
       </SearchUsersList>

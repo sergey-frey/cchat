@@ -5,6 +5,7 @@ import debounce from "debounce";
 import { useCallback } from "react";
 import { CREATE_CHAT_SEARCH_LIMIT } from "../constants";
 import { PLACEHOLDER_USERS } from "../constants/placeholder";
+import { useAppContainerScroll } from "@/shared/utils/app-container";
 
 type UseCreateChatOptions = {
   search: string;
@@ -35,6 +36,8 @@ export const useCreateChat = ({
     },
   );
 
+  const { scroll } = useAppContainerScroll();
+
   const paginationTriggerRef = useIntersection<HTMLDivElement>({
     onIntersect: fetchNextUsersPage,
   });
@@ -55,6 +58,10 @@ export const useCreateChat = ({
 
   const isShowPlaceholders = isSearchPlaceholderData || isSearchRefetching;
 
+  const isShowScrollDivider = scroll > 0;
+
+  const isChatMembersDirty = chatMembers.length > 0 && !isSearchPlaceholderData;
+
   return {
     users,
     hasNextUsersPage,
@@ -64,5 +71,7 @@ export const useCreateChat = ({
     isShowCreateChatButton,
     fetchUsersError,
     isShowPlaceholders,
+    isShowScrollDivider,
+    isChatMembersDirty,
   };
 };

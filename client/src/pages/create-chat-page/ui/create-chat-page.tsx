@@ -52,6 +52,14 @@ export const CreateChatPage = () => {
     containerRef.current.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleUserClick = (user: IUser) => {
+    if (chatMembers.includes(user)) {
+      chatMembersMethods.remove(user);
+    } else {
+      chatMembersMethods.pushUnique(user);
+    }
+  };
+
   return (
     <section className="p-4 pt-0 relative">
       <motion.div
@@ -119,7 +127,7 @@ export const CreateChatPage = () => {
             <button
               key={user.id}
               className="text-start"
-              onClick={() => chatMembersMethods.pushUnique(user)}
+              onClick={() => handleUserClick(user)}
             >
               <UserItem
                 className={cn(

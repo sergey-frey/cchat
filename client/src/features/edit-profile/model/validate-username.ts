@@ -1,5 +1,5 @@
-import { IGetUserByUsernameResponse, userService } from "@/entities/user";
-import { KyResponse } from "ky";
+import { userService } from "@/entities/user";
+import { HTTPError } from "ky";
 
 export const checkUniqueUsername = async (
   username: string,
@@ -9,7 +9,7 @@ export const checkUniqueUsername = async (
     .then((response) => {
       return response.status === 404;
     })
-    .catch((response: KyResponse<IGetUserByUsernameResponse>) => {
-      return response.status === 404;
+    .catch((response: HTTPError) => {
+      return response.response.status === 404;
     });
 };

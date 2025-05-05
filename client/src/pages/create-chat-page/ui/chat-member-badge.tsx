@@ -29,15 +29,15 @@ export const ChatMemberBadge = ({ user, onClick }: ChatMemberBadgeProps) => {
           <TrashIcon
             className={cn(
               "abs-center w-4 h-4",
-              "scale-75 opacity-0 transition-all",
+              "scale-50 opacity-0 transition-all",
               "group-hover:scale-100 group-hover:opacity-100",
             )}
-          /> 
+          />
         </UserBadge.Avatar>
         <UserBadge.Username className="transition-colors group-hover:text-black">
           @{user.username}
         </UserBadge.Username>
-        <UserBadge.EndContent className="lg:hidden">
+        <UserBadge.EndContent className="transition-colors text-foreground-300 lg:hidden group-hover:text-foreground-900">
           <XCircleIcon className="w-5 h-5" />
         </UserBadge.EndContent>
       </UserBadge>

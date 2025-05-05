@@ -27,6 +27,7 @@ export const Confirm = () => {
       isOpen={Boolean(confirmFn)}
       onClose={handleCloseConfirm}
       size="xs"
+      backdrop="blur"
       hideCloseButton
     >
       <ModalContent>

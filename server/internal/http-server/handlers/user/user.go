@@ -67,10 +67,10 @@ func (u *UserHandler) GetUser(ctx context.Context) http.HandlerFunc {
 		if err != nil {
 			log.Error("failed to get info")
 
-			render.Status(r, http.StatusBadRequest)
+			render.Status(r, http.StatusInternalServerError)
 
 			render.JSON(w, r, resp.Response{
-				Status: http.StatusBadRequest,
+				Status: http.StatusInternalServerError,
 				Error:  err.Error(),
 			})
 
@@ -113,6 +113,8 @@ func (u *UserHandler) GetProfile(ctx context.Context) http.HandlerFunc {
 		if username == "" {
 			log.Warn("username is empty")
 
+			render.Status(r, http.StatusConflict)
+
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusConflict,
 				Error: "invalid request",
@@ -126,6 +128,8 @@ func (u *UserHandler) GetProfile(ctx context.Context) http.HandlerFunc {
 			if errors.Is(err, user.ErrUserNotFound) {
 				log.Warn("user not found", "user", username)
 
+				render.Status(r, http.StatusNotFound)
+
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusNotFound,
 					Error: "user not found",
@@ -135,8 +139,10 @@ func (u *UserHandler) GetProfile(ctx context.Context) http.HandlerFunc {
 			}
 			log.Error("failed to get profile", sl.Err(err))
 
+			render.Status(r, http.StatusInternalServerError)
+
 			render.JSON(w, r, resp.Response{
-				Status: http.StatusBadRequest,
+				Status: http.StatusInternalServerError,
 				Error: "failed to get profile",
 			})
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -18,23 +19,28 @@ import (
 )
 
 type User interface {
-	GetUser(ctx context.Context, username string) (info *models.UserInfo, err error)
-	GetProfile(ctx context.Context, username string) (info *models.UserInfo, err error)
-	UpdateUserInfo(ctx context.Context, username string, newInfo models.NewUserInfo) (info *models.UserInfo, accessToken string, refreshToken string, err error)
+	MyProfile(ctx context.Context, username string) (info *models.UserInfo, err error)
+	Profile(ctx context.Context, username string) (info *models.UserInfo, err error)
+	ListProfiles(ctx context.Context, username string, cursor int64, limit int) (profiles []models.UserInfo, cursors *models.Cursor, err error)
+	UpdateInfo(ctx context.Context, username string, newInfo models.NewUserInfo) (info *models.UserInfo, accessToken string, refreshToken string, err error)
 }
 
 type UserHandler struct {
 	userHandler User
-	log                 *slog.Logger
+	log         *slog.Logger
 }
 
 func New(userProvider User, log *slog.Logger) *UserHandler {
 	return &UserHandler{
 		userHandler: userProvider,
-		log:                 log,
+		log:         log,
 	}
 }
 
+type ProfilesResponse struct {
+	Profiles []models.UserInfo `json:"profiles"`
+	RCursor models.Cursor `json:"cursors"`
+}
 
 // @Summary GetMyProfile
 // @Tags user
@@ -49,7 +55,7 @@ func New(userProvider User, log *slog.Logger) *UserHandler {
 // @Security CookieAuth
 // @Router /user/myprofile [get]
 //go:generate go run github.com/vektra/mockery/v2@v2.53 --name=User
-func (u *UserHandler) GetUser(ctx context.Context) http.HandlerFunc {
+func (u *UserHandler) MyProfile(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.user.GetUser"
 
@@ -63,7 +69,7 @@ func (u *UserHandler) GetUser(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		info, err := u.userHandler.GetUser(ctx, username)
+		info, err := u.userHandler.MyProfile(ctx, username)
 		if err != nil {
 			log.Error("failed to get info")
 
@@ -86,7 +92,6 @@ func (u *UserHandler) GetUser(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-
 // @Summary GetProfile
 // @Tags user
 // @Description Returns user data, if it exists.
@@ -100,7 +105,7 @@ func (u *UserHandler) GetUser(ctx context.Context) http.HandlerFunc {
 // @Failure default {object} response.Response
 // @Security CookieAuth
 // @Router /user/profile/{username} [get]
-func (u *UserHandler) GetProfile(ctx context.Context) http.HandlerFunc {
+func (u *UserHandler) Profile(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handler.user.GetProfile"
 
@@ -117,13 +122,13 @@ func (u *UserHandler) GetProfile(ctx context.Context) http.HandlerFunc {
 
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusConflict,
-				Error: "invalid request",
+				Error:  "invalid request",
 			})
 
 			return
 		}
 
-		userInfo, err := u.userHandler.GetProfile(ctx, username)
+		userInfo, err := u.userHandler.Profile(ctx, username)
 		if err != nil {
 			if errors.Is(err, user.ErrUserNotFound) {
 				log.Warn("user not found", "user", username)
@@ -132,7 +137,7 @@ func (u *UserHandler) GetProfile(ctx context.Context) http.HandlerFunc {
 
 				render.JSON(w, r, resp.Response{
 					Status: http.StatusNotFound,
-					Error: "user not found",
+					Error:  "user not found",
 				})
 
 				return
@@ -143,7 +148,7 @@ func (u *UserHandler) GetProfile(ctx context.Context) http.HandlerFunc {
 
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusInternalServerError,
-				Error: "failed to get profile",
+				Error:  "failed to get profile",
 			})
 
 			return
@@ -157,11 +162,147 @@ func (u *UserHandler) GetProfile(ctx context.Context) http.HandlerFunc {
 
 		render.JSON(w, r, resp.Response{
 			Status: http.StatusOK,
-			Data: userInfo,
+			Data:   userInfo,
 		})
 	}
 }
 
+// @Summary ListProfiles
+// @Tags user
+// @Description Returns a list of users with a matching username
+// @ID list-profiles
+// @Produce json
+// @Param username path string true "Username"
+// @Param cursor path int false "ID of the user after whom the search will take place, 0 if at first"
+// @Param limit path int true "Size of the list of returned users"
+// @Success 200 {object} user.ProfilesResponse
+// @Failure 400,409 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Security CookieAuth
+// @Router /user/list-profiles/{username}/{cursor}/{limit} [get]
+func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		const op = "handlers.user.UpdateUserInfo"
+
+		log := u.log.With(
+			slog.String("op", op),
+			slog.String("request_id", middleware.GetReqID(r.Context())),
+		)
+
+		username := chi.URLParam(r, "username")
+		if username == "" {
+			log.Warn("username is empty")
+
+			render.Status(r, http.StatusConflict)
+
+			render.JSON(w, r, resp.Response{
+				Status: http.StatusConflict,
+				Error:  "username is empty",
+			})
+
+			return
+		}
+
+		stringCursor := chi.URLParam(r, "cursor")
+
+		stringPageSize := chi.URLParam(r, "limit")
+		if stringPageSize == "" {
+			log.Warn("limit is empty")
+
+			render.Status(r, http.StatusConflict)
+
+			render.JSON(w, r, resp.Response{
+				Status: http.StatusConflict,
+				Error:  "limit is empty",
+			})
+
+			return
+		}
+
+		var cursor int64
+		var err error
+
+		if stringCursor == "" {
+			cursor = 0
+		} else {
+			cursor, err = strconv.ParseInt(stringCursor, 10, 64)
+			if err != nil {
+				log.Error("failed to convert cursor")
+
+				render.Status(r, http.StatusInternalServerError)
+
+				render.JSON(w, r, resp.Response{
+					Status: http.StatusInternalServerError,
+					Error:  "failed to convert curosr",
+				})
+
+				return
+			}
+		}
+
+		limit, err := strconv.Atoi(stringPageSize)
+		if err != nil {
+			log.Warn("failed to convert limit")
+
+			render.Status(r, http.StatusInternalServerError)
+
+			render.JSON(w, r, resp.Response{
+				Status: http.StatusInternalServerError,
+				Error:  "failed to convert limit",
+			})
+
+			return
+		}
+
+		if limit < 1 {
+			log.Warn("limit must be more than 0")
+
+			render.Status(r, http.StatusBadRequest)
+
+			render.JSON(w, r, resp.Response{
+				Status: http.StatusBadRequest,
+				Error:  "limit must be more than 0",
+			})
+
+			return
+		}
+
+		profiles, rcursor, err := u.userHandler.ListProfiles(ctx, username, cursor, limit)
+		if err != nil {
+			if errors.Is(err, user.ErrUsersNotFound) {
+				log.Warn("users not found")
+
+				render.Status(r, http.StatusBadRequest)
+
+				render.JSON(w, r, resp.Response{
+				Status: http.StatusBadRequest,
+				Error:  "users not found",
+			})
+
+			return
+			}
+
+			log.Error("internal error")
+
+			render.Status(r, http.StatusInternalServerError)
+
+			render.JSON(w, r, resp.Response{
+				Status: http.StatusInternalServerError,
+				Error:  "internal error",
+			})
+
+			return
+		}
+
+		log.Info("got profiles")
+
+		render.JSON(w, r, ProfilesResponse{
+			Profiles: profiles,
+			RCursor: *rcursor,
+		})
+	}
+}
 
 // @Summary UpdateProfile
 // @Tags user
@@ -176,7 +317,7 @@ func (u *UserHandler) GetProfile(ctx context.Context) http.HandlerFunc {
 // @Failure default {object} response.Response
 // @Security CookieAuth
 // @Router /user/update [patch]
-func (u *UserHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
+func (u *UserHandler) UpdateInfo(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.user.UpdateUserInfo"
 
@@ -197,7 +338,7 @@ func (u *UserHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		info, accessToken, refreshToken, err := u.userHandler.UpdateUserInfo(ctx, username, newInfo)
+		info, accessToken, refreshToken, err := u.userHandler.UpdateInfo(ctx, username, newInfo)
 
 		if refreshToken != "" {
 			cookie.SetCookie(w, accessToken, refreshToken)
@@ -236,7 +377,7 @@ func (u *UserHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
 
 				return
 			}
-			
+
 			render.Status(r, http.StatusBadRequest)
 
 			render.JSON(w, r, resp.Response{
@@ -255,7 +396,6 @@ func (u *UserHandler) UpdateUserInfo(ctx context.Context) http.HandlerFunc {
 		})
 	}
 }
-
 
 func HandleGettingCookie(w http.ResponseWriter, r *http.Request, err error, log *slog.Logger) bool {
 	if err != nil {

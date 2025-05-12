@@ -79,9 +79,10 @@ func main() {
 	))
 
 	router.With(jwtcheck.JWTCheck).Route("/cchat/user", func(r chi.Router) {
-		r.Get("/myprofile", userHandler.GetUser(context.Background()))
-		r.Get("/profile/{username}", userHandler.GetProfile(context.Background()))
-		r.Patch("/update", userHandler.UpdateUserInfo(context.Background()))
+		r.Get("/myprofile", userHandler.MyProfile(context.Background()))
+		r.Get("/profile/{username}", userHandler.Profile(context.Background()))
+		r.Get("/list-profiles/{username}/{cursor}/{limit}", userHandler.ListProfiles(context.Background()))
+		r.Patch("/update", userHandler.UpdateInfo(context.Background()))
 	})
 
 	router.Route("/cchat/auth", func(r chi.Router) {

@@ -14,37 +14,38 @@ import (
 )
 
 type UserService interface {
-	GetUser(ctx context.Context, username string) (info *models.UserInfo, err error)
-	GetProfile(ctx context.Context, username string) (info *models.UserInfo, err error)
+	MyProfile(ctx context.Context, username string) (info *models.UserInfo, err error)
+	Profile(ctx context.Context, username string) (info *models.UserInfo, err error)
+	Password(ctx context.Context, username string) (passHash []byte, err error)
+	ListProfiles(ctx context.Context, username string, cursor int64, limit int) (profiles []models.UserInfo, cursors *models.Cursor, err error)
 	ChangeUsername(ctx context.Context, oldUsername string, newUsername string) (info *models.UserInfo, err error)
 	ChangeEmail(ctx context.Context, username string, newEmail string) (info *models.UserInfo, err error)
 	ChangeName(ctx context.Context, username string, newName string) (info *models.UserInfo, err error)
 	ChangePassword(ctx context.Context, username string, newPasswordHash []byte) (err error)
-	GetPassword(ctx context.Context, username string) (passHash []byte, err error)
 }
 
 type UserDataService struct {
 	userService UserService
-	log          *slog.Logger
+	log         *slog.Logger
 }
 
 func New(userProvider UserService, log *slog.Logger) *UserDataService {
 	return &UserDataService{
 		userService: userProvider,
-		log:          log,
+		log:         log,
 	}
 }
 
 var (
-	ErrUserNotFound = errors.New("user not found")
-	ErrUsernameExists = errors.New("username already exists")
-	ErrEmailExists = errors.New("email already exists")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrUsersNotFound = errors.New("users not found")
+	ErrUsernameExists    = errors.New("username already exists")
+	ErrEmailExists       = errors.New("email already exists")
 	ErrPasswordsMismatch = errors.New("passwords don't match")
 )
 
-
-func (u *UserDataService) GetUser(ctx context.Context, username string) (*models.UserInfo, error) {
-	const op = "services.user.GetUser"
+func (u *UserDataService) MyProfile(ctx context.Context, username string) (*models.UserInfo, error) {
+	const op = "services.user.MyProfile"
 
 	log := u.log.With(
 		slog.String("op", op),
@@ -53,7 +54,7 @@ func (u *UserDataService) GetUser(ctx context.Context, username string) (*models
 
 	log.Info("getting user information")
 
-	info, err := u.userService.GetUser(ctx, username)
+	info, err := u.userService.MyProfile(ctx, username)
 	if err != nil {
 		log.Error("failed to get user", sl.Err(err))
 
@@ -65,9 +66,8 @@ func (u *UserDataService) GetUser(ctx context.Context, username string) (*models
 	return info, nil
 }
 
-
-func (u *UserDataService) GetProfile(ctx context.Context, username string) (*models.UserInfo, error) {
-	const op = "services.user.GetProfile"
+func (u *UserDataService) Profile(ctx context.Context, username string) (*models.UserInfo, error) {
+	const op = "services.user.Profile"
 
 	log := u.log.With(
 		slog.String("op", op),
@@ -76,7 +76,7 @@ func (u *UserDataService) GetProfile(ctx context.Context, username string) (*mod
 
 	log.Info("getting user information")
 
-	info, err := u.userService.GetProfile(ctx, username)
+	info, err := u.userService.Profile(ctx, username)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			log.Error("user not found", sl.Err(err))
@@ -94,8 +94,34 @@ func (u *UserDataService) GetProfile(ctx context.Context, username string) (*mod
 	return info, nil
 }
 
+func (u *UserDataService) ListProfiles(ctx context.Context, username string, cursor int64, limit int) ([]models.UserInfo, *models.Cursor, error) {
+	const op = "services.user.ListProfiles"
 
-func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, newInfo models.NewUserInfo) (info *models.UserInfo, accessToken string, refreshToken string, err error) {
+	log := u.log.With(
+		slog.String("op", op),
+		slog.String("username", username),
+	)
+
+	log.Info("getting profiles")
+
+	profiles, rcursor, err := u.userService.ListProfiles(ctx, username, cursor, limit)
+	if err != nil {
+		if errors.Is(err, storage.ErrUsersNotFound) {
+			log.Error("users not found")
+
+			return nil, nil, fmt.Errorf("%s: %w", op, ErrUsersNotFound)
+		}
+		log.Error("failed to get profiles", sl.Err(err))
+
+		return nil, nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("got profiles")
+
+	return profiles, rcursor, nil
+}
+
+func (u *UserDataService) UpdateInfo(ctx context.Context, username string, newInfo models.NewUserInfo) (info *models.UserInfo, accessToken string, refreshToken string, err error) {
 	const op = "services.user.UpdateUserInfo"
 
 	log := u.log.With(
@@ -106,7 +132,7 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 	if newInfo.NewPassword != "" {
 		log.Info("changing password")
 
-		oldPassHash, err := u.userService.GetPassword(ctx, username)
+		oldPassHash, err := u.userService.Password(ctx, username)
 		if err != nil {
 			log.Error("failed to get old password")
 
@@ -137,8 +163,8 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 		log.Info("password changed")
 
 	}
-		
-	if newInfo.Name != ""  {
+
+	if newInfo.Name != "" {
 		log.Info("changing name")
 
 		info, err = u.userService.ChangeName(ctx, username, newInfo.Name)
@@ -151,7 +177,7 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 		log.Info("name changed")
 	}
 
-	if newInfo.Email != ""  {
+	if newInfo.Email != "" {
 		log.Info("changing email")
 
 		info, err = u.userService.ChangeEmail(ctx, username, newInfo.Email)
@@ -171,7 +197,7 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 
 	if newInfo.Username != "" {
 		log.Info("changing username")
-		
+
 		info, err := u.userService.ChangeUsername(ctx, username, newInfo.Username)
 		if err != nil {
 			if errors.Is(err, storage.ErrUsernameExists) {
@@ -191,9 +217,9 @@ func (u *UserDataService) UpdateUserInfo(ctx context.Context, username string, n
 
 			return nil, "", "", fmt.Errorf("%s: %w", op, err)
 		}
-		
+
 		log.Info("username changed")
 	}
-	
+
 	return info, accessToken, refreshToken, nil
 }

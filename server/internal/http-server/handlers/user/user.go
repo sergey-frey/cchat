@@ -172,15 +172,15 @@ func (u *UserHandler) Profile(ctx context.Context) http.HandlerFunc {
 // @Description Returns a list of users with a matching username
 // @ID list-profiles
 // @Produce json
-// @Param username path string true "Username"
-// @Param cursor path int false "ID of the user after whom the search will take place, 0 if at first"
-// @Param limit path int true "Size of the list of returned users"
+// @Param username query string false "Username"
+// @Param cursor query int false "ID of the user after whom the search will take place, 0 if at first"
+// @Param limit query int true "Size of the list of returned users"
 // @Success 200 {object} user.ProfilesResponse
 // @Failure 400,409 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
 // @Security CookieAuth
-// @Router /user/list-profiles/{username}/{cursor}/{limit} [get]
+// @Router /user/list-profiles [get]
 func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.user.UpdateUserInfo"
@@ -190,23 +190,23 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		username := chi.URLParam(r, "username")
+		username := r.URL.Query().Get("username")
 		if username == "" {
 			log.Warn("username is empty")
 
-			render.Status(r, http.StatusConflict)
+			render.Status(r, http.StatusOK)
 
 			render.JSON(w, r, resp.Response{
-				Status: http.StatusConflict,
-				Error:  "username is empty",
+				Status: http.StatusOK,
+				Data: ProfilesResponse{},
 			})
 
 			return
 		}
 
-		stringCursor := chi.URLParam(r, "cursor")
+		stringCursor := r.URL.Query().Get("cursor")
 
-		stringPageSize := chi.URLParam(r, "limit")
+		stringPageSize := r.URL.Query().Get("limit")
 		if stringPageSize == "" {
 			log.Warn("limit is empty")
 

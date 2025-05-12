@@ -223,7 +223,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/list-profiles/{username}/{cursor}/{limit}": {
+        "/user/list-profiles": {
             "get": {
                 "security": [
                     {
@@ -244,20 +244,19 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Username",
                         "name": "username",
-                        "in": "path",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
                         "description": "ID of the user after whom the search will take place, 0 if at first",
                         "name": "cursor",
-                        "in": "path"
+                        "in": "query"
                     },
                     {
                         "type": "integer",
                         "description": "Size of the list of returned users",
                         "name": "limit",
-                        "in": "path",
+                        "in": "query",
                         "required": true
                     }
                 ],

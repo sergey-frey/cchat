@@ -1,5 +1,6 @@
 import { authService } from "@/entities/auth/model/auth-service";
 import { NAVIGATION } from "@/shared/navigation";
+import { queryClient } from "@/shared/query-client";
 import { useLocation } from "wouter";
 
 export const useLogout = () => {
@@ -7,6 +8,8 @@ export const useLogout = () => {
 
   return () =>
     authService.logout().finally(() => {
+      queryClient.invalidateQueries();
+
       setLocation(NAVIGATION.auth({ searchParams: { state: "login" } }), {
         replace: true,
       });

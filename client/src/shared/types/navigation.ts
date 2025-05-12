@@ -1,3 +1,3 @@
 export type NavigationOriginState = {
-  origin: string;
+  origin?: string;
 };

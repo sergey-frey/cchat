@@ -1,4 +1,3 @@
-import { userApi } from "@/shared/api/instance/instance";
 import { queryClient } from "@/shared/query-client";
 import {
   InfiniteData,
@@ -9,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { SearchUsersDto, UpdateUserDto } from "../types/dto";
 import { ISearchUsersResponse, IUserProfileResponse } from "../types/responses";
+import { USER_QUERY_KEYS } from "./query-keys";
 import { userService } from "./user-service";
 
 export const useProfileQuery = (
@@ -18,21 +18,12 @@ export const useProfileQuery = (
   > = {},
 ) => {
   return useQuery<IUserProfileResponse["data"]>({
-    queryKey: ["profile"],
+    queryKey: [USER_QUERY_KEYS.PROFILE],
     queryFn: async () => {
       const res = await userService.getProfile();
       return res.data;
     },
     ...options,
-  });
-};
-
-export const useCheckUsernameQuery = () => {
-  return useQuery<{ isUnique: boolean }>({
-    queryKey: [],
-    queryFn: () => {
-      return userApi.get("profile").json();
-    },
   });
 };
 
@@ -43,7 +34,7 @@ export const useUpdateProfileQuery = () => {
       return res.data;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(["profile"], data);
+      queryClient.setQueryData([USER_QUERY_KEYS.PROFILE], data);
     },
   });
 };
@@ -57,7 +48,7 @@ export const useSearchUsersQuery = (
   } = {},
 ) => {
   return useInfiniteQuery({
-    queryKey: ["users-search"],
+    queryKey: [USER_QUERY_KEYS.USERS_SEARCH],
     queryFn: async ({ signal, pageParam }) => {
       const res = await userService.searchUsers(
         {
@@ -78,7 +69,10 @@ export const useSearchUsersQuery = (
 
       return (lastPageParam as number) + 1;
     },
-    select: (data) => {console.log(data);return data.pages.flat()},
+    select: (data) => {
+      console.log(data);
+      return data.pages.flat();
+    },
     placeholderData,
   });
 };

@@ -1,16 +1,19 @@
 import { EditProfileForm } from "@/features/edit-profile";
 import { NAVIGATION } from "@/shared/navigation";
+import { NavigationOriginState } from "@/shared/types/navigation";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Divider } from "@heroui/divider";
-import { addToast } from "@heroui/toast";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
+import { useEditProfileHandlers } from "../model/use-edit-profile-handlers";
 
 export const EditProfilePage = () => {
-  const history = useHistoryState<{ origin?: string }>();
-  const setLocation = useLocation()[1];
+  const history = useHistoryState<NavigationOriginState>();
+
+  const { handleEditProfileSuccess, handleEditProfileError } =
+    useEditProfileHandlers();
 
   const backHref = history?.origin ?? NAVIGATION.profile;
 
@@ -33,21 +36,8 @@ export const EditProfilePage = () => {
         <Divider />
         <CardBody>
           <EditProfileForm
-            onSuccess={() => {
-              setLocation(NAVIGATION.profile);
-              addToast({
-                title: "Profile updated",
-                description: "Your profile has been updated successfully",
-                color: "success",
-              });
-            }}
-            onError={() => {
-              addToast({
-                title: "Profile update",
-                description: "Your profile has not been updated",
-                color: "danger",
-              });
-            }}
+            onSuccess={handleEditProfileSuccess}
+            onError={handleEditProfileError}
           />
         </CardBody>
       </Card>

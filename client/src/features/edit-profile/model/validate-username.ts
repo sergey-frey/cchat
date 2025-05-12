@@ -9,7 +9,7 @@ export const checkUniqueUsername = async (
     .then((response) => {
       return response.status === 404;
     })
-    .catch((response: HTTPError) => {
-      return response.response.status === 404;
+    .catch((error: HTTPError) => {
+      return error.response.status === 404;
     });
 };

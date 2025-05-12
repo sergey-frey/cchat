@@ -18,6 +18,7 @@ export const useEditProfileControlsStates = ({
 }: UseEditProfileControlsStatesOptions) => {
   const isValidUsername = !errors.username.length;
   const isValidEmail = !errors.email.length;
+  const isValidName = !errors.name.length;
   const isInputsDisabled = updatingMutationState.isPending;
   const isSubmitDisabled =
     !isValidUsername ||
@@ -36,6 +37,7 @@ export const useEditProfileControlsStates = ({
     isSubmitDisabled,
     isValidEmail,
     isValidUsername,
+    isValidName,
     usernameInputValidIcon,
   };
 };

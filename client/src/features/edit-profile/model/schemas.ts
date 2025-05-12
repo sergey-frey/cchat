@@ -19,7 +19,13 @@ export const usernameSchema = pipeAsync(
 
 export const emailSchema = pipe(string(), email("Invalid email"));
 
+export const nameSchema = pipe(
+  string(),
+  minLength(4, "Name must be at latest 4 characters long"),
+);
+
 export type EditProfileFormSchema = {
   username: string;
   email: string;
+  name: string;
 };

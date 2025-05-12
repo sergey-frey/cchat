@@ -2,14 +2,27 @@ import { useProfileQuery, useUpdateProfileQuery } from "@/entities/user";
 import debounce from "debounce";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { safeParseAsync } from "valibot";
-import { EditProfileFormSchema, emailSchema, usernameSchema } from "./schemas";
+import {
+  EditProfileFormSchema,
+  emailSchema,
+  nameSchema,
+  usernameSchema,
+} from "./schemas";
+import { keys } from "@/shared/utils/objects";
 
 const initialFormState: EditProfileFormSchema = {
   username: "",
   email: "",
+  name: "",
 };
 
 export type ValidationErrors = Record<keyof EditProfileFormSchema, string[]>;
+
+const initialErrorsState: ValidationErrors = {
+  username: [],
+  email: [],
+  name: [],
+};
 
 type UseEditProfileFormOptions = {
   onSuccess?: () => void;
@@ -23,10 +36,7 @@ export const useEditProfileForm = ({
   const [userFormState, setUserFormState] = useState<
     Partial<EditProfileFormSchema>
   >({});
-  const [errors, setErrors] = useState<ValidationErrors>({
-    username: [],
-    email: [],
-  });
+  const [errors, setErrors] = useState<ValidationErrors>(initialErrorsState);
   const [isFormDirty, setIsFormDirty] = useState(false);
 
   const profileQuery = useProfileQuery({
@@ -90,19 +100,34 @@ export const useEditProfileForm = ({
     }));
   };
 
+  const handleNameChange = async (name: string) => {
+    setUserFormState((prev) => ({ ...prev, name }));
+    setIsFormDirty(true);
+
+    const parsedName = await safeParseAsync(nameSchema, name);
+    const nameIssues = parsedName.issues?.map((issue) => issue.message) ?? [];
+
+    setErrors((prev) => ({
+      ...prev,
+      name: nameIssues,
+    }));
+  };
+
   const reset = () => {
     setUserFormState({});
-    setErrors({ username: [], email: [] });
+    setErrors(initialErrorsState);
     setIsFormDirty(false);
   };
 
   const hasErrors = Object.values(errors).some(
     (fieldErrors) => fieldErrors.length > 0,
   );
+
   const hasChanges =
     isFormDirty &&
-    (formData.username !== profileQuery.data?.username ||
-      formData.email !== profileQuery.data?.email);
+    keys(errors).some(
+      (field) => formData[field] !== profileQuery.data?.[field],
+    );
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -128,6 +153,7 @@ export const useEditProfileForm = ({
     },
     handleUsernameChange,
     handleEmailChange,
+    handleNameChange,
     handleSubmit,
     errors,
     reset,

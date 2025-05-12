@@ -23,6 +23,7 @@ export const EditProfileForm = ({
     formData,
     handleUsernameChange,
     handleEmailChange,
+    handleNameChange,
     handleSubmit,
     fetchingQueryState,
     updatingMutationState,
@@ -38,6 +39,7 @@ export const EditProfileForm = ({
     isSubmitDisabled,
     isValidEmail,
     isValidUsername,
+    isValidName,
     usernameInputValidIcon,
   } = useEditProfileControlsStates({
     errors,
@@ -85,6 +87,26 @@ export const EditProfileForm = ({
             errorMessage={
               <ul>
                 {errors.email.map((error, i) => (
+                  <li key={i}>{error}</li>
+                ))}
+              </ul>
+            }
+          />
+        </Skeleton>
+
+        <Skeleton
+          className="rounded-medium"
+          isLoaded={!fetchingQueryState.isPending}
+        >
+          <Input
+            label="Name"
+            value={formData.name}
+            onValueChange={handleNameChange}
+            isInvalid={!isValidName}
+            isDisabled={isInputsDisabled}
+            errorMessage={
+              <ul>
+                {errors.name.map((error, i) => (
                   <li key={i}>{error}</li>
                 ))}
               </ul>

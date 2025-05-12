@@ -235,23 +235,22 @@ paths:
       summary: Session
       tags:
       - auth
-  /user/list-profiles/{username}/{cursor}/{limit}:
+  /user/list-profiles:
     get:
       description: Returns a list of users with a matching username
       operationId: list-profiles
       parameters:
       - description: Username
-        in: path
+        in: query
         name: username
-        required: true
         type: string
       - description: ID of the user after whom the search will take place, 0 if at
           first
-        in: path
+        in: query
         name: cursor
         type: integer
       - description: Size of the list of returned users
-        in: path
+        in: query
         name: limit
         required: true
         type: integer

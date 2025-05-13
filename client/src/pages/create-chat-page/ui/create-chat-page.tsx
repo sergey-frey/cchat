@@ -19,6 +19,7 @@ import { ChatMembers } from "./chat-members";
 import { CreateChatUserItem } from "./create-chat-user-item";
 import { ScrollTopButton } from "./scroll-top-button";
 import { SearchUsersList } from "./search-users-list";
+import { CREATE_CHAT_SEARCH_LIMIT } from "../constants";
 
 export const CreateChatPage = () => {
   const { state } = useLocationState<NavigationOriginState>();
@@ -105,12 +106,14 @@ export const CreateChatPage = () => {
       <SearchUsersList
         users={users ?? []}
         hasNextUsersPage={hasNextUsersPage}
+        queryLimit={CREATE_CHAT_SEARCH_LIMIT}
         selectedUsers={chatMembers}
         error={fetchUsersError}
       >
         {({ user, isNeedRenderPaginationTrigger, isSelected }) => {
           return (
             <CreateChatUserItem
+              key={user.id}
               user={user}
               isSelected={isSelected}
               isShowPlaceholders={isShowPlaceholders}

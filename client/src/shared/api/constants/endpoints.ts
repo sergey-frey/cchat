@@ -11,6 +11,6 @@ export const API_ENDPOINTS = {
     MY_PROFILE: "myprofile",
     profile: (username: string) => urlJoin("profile", username),
     UPDATE: "update",
-    SEARCH: "search",
+    SEARCH: "list-profiles",
   },
 };

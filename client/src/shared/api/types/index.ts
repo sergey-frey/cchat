@@ -2,6 +2,15 @@ import { IMessage } from "@/entities/chats";
 
 export type IResponse<T> = { status: number; data: T };
 
+export type IResponseWithCursor<T> = IResponse<
+  {
+    cursors: {
+      prev_cursor: number | null;
+      next_cursor: number | null;
+    };
+  } & T
+>;
+
 export type IUserServerData = {
   ID: string;
   Username: string;

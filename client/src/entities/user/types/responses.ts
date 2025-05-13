@@ -1,4 +1,4 @@
-import { IResponse } from "@/shared/api/types";
+import { IResponse, IResponseWithCursor } from "@/shared/api/types";
 
 export type IUserProfileResponse = IResponse<{
   id: string;
@@ -21,11 +21,11 @@ export type IGetUserByUsernameResponse = IResponse<{
   name: string;
 }>;
 
-export type ISearchUsersResponse = IResponse<
-  Array<{
+export type ISearchUsersResponse = IResponseWithCursor<{
+  profiles: Array<{
     id: string;
     username: string;
     email: string;
     name: string;
-  }>
->;
+  }>;
+}>;

@@ -11,9 +11,10 @@ type ChildrenOptions = {
 };
 
 type SearchUsersListProps = {
-  users: ISearchUsersResponse["data"];
+  users: ISearchUsersResponse["data"]["profiles"];
   selectedUsers: IUser[];
   hasNextUsersPage: boolean;
+  queryLimit?: number;
   error?: Error | null;
   children: (options: ChildrenOptions) => ReactNode;
 };
@@ -22,6 +23,7 @@ export const SearchUsersList = ({
   users,
   selectedUsers,
   hasNextUsersPage,
+  queryLimit,
   error,
   children,
 }: SearchUsersListProps) => {
@@ -33,6 +35,7 @@ export const SearchUsersList = ({
       >
         <ExclamationCircleIcon className="w-5 h-5" />
         Oops, Something went wrong...
+        <>{error.message}</>
       </motion.div>
     );
   }
@@ -44,7 +47,9 @@ export const SearchUsersList = ({
           i === Math.max(0, users.length - 10);
 
         const isNeedRenderPaginationTrigger =
-          isPlaceForPaginationTrigger && hasNextUsersPage;
+          isPlaceForPaginationTrigger &&
+          hasNextUsersPage &&
+          users.length > (queryLimit ?? 0);
 
         const isSelected =
           selectedUsers.find((selectedUser) => selectedUser.id === user.id) !==

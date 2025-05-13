@@ -61,17 +61,16 @@ export const useSearchUsersQuery = (
 
       return res.data;
     },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.length === 0) {
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage?.cursors.next_cursor) {
         return undefined;
       }
 
-      return (lastPageParam as number) + 1;
+      return lastPage?.cursors.next_cursor;
     },
     select: (data) => {
-      console.log(data);
-      return data.pages.flat();
+      return data.pages.map((page) => page.profiles).flat();
     },
     placeholderData,
   });

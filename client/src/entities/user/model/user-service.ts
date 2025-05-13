@@ -66,7 +66,9 @@ class UserService {
         searchParams: {
           username,
           ...(limit ? { limit: limit.toString() } : {}),
-          ...(pagination ? { pagination: pagination.toString() } : {}),
+          ...(pagination !== undefined
+            ? { cursor: pagination.toString() }
+            : {}),
         },
         signal,
       },

@@ -39,7 +39,7 @@ func CheckSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 
 				render.Status(r, http.StatusUnauthorized)
 
-				render.JSON(w, r, resp.Response{
+				render.JSON(w, r, resp.ErrorResponse{
 					Status: http.StatusUnauthorized,
 					Error:  "user unauthorized",
 				})
@@ -51,7 +51,7 @@ func CheckSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 
 			render.Status(r, http.StatusInternalServerError)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusInternalServerError,
 				Error:  "user unauthorized",
 			})
@@ -59,7 +59,7 @@ func CheckSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 			return
 		}
 
-		render.JSON(w, r, resp.Response{
+		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
 			Data:   user,
 		})
@@ -85,8 +85,9 @@ func FinishSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 
 		cookie.DeleteCookie(w)
 
-		render.JSON(w, r, resp.Response{
+		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
+			Data: "success logout",
 		})
 
 	}

@@ -8,13 +8,17 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type Response struct {
-	Status int    `json:"status"`
-	Error  string `json:"error,omitempty"`
-	Data   any    `json:"data,omitempty"`
+type ErrorResponse struct {
+	Status int `json:"status"`
+	Error string `json:"error"`
 }
 
-func ValidationError(errs validator.ValidationErrors) Response {
+type SuccessResponse struct {
+	Status int    `json:"status"`
+	Data   any    `json:"data"`
+}
+
+func ValidationError(errs validator.ValidationErrors) ErrorResponse {
 	var errMsgs []string
 
 	for _, err := range errs {
@@ -34,7 +38,7 @@ func ValidationError(errs validator.ValidationErrors) Response {
 		}
 	}
 
-	return Response{
+	return ErrorResponse{
 		Status: http.StatusConflict,
 		Error:  strings.Join(errMsgs, ", "),
 	}

@@ -69,7 +69,7 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 
 				render.Status(r, http.StatusConflict)
 
-				render.JSON(w, r, resp.Response{
+				render.JSON(w, r, resp.ErrorResponse{
 					Status: http.StatusConflict,
 					Error:  "invalid email or password",
 				})
@@ -79,7 +79,7 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 
 			render.Status(r, http.StatusInternalServerError)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusInternalServerError,
 				Error:  "internal error",
 			})
@@ -88,7 +88,7 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 
 		cookie.SetCookie(w, accessToken, refreshToken)
 
-		render.JSON(w, r, resp.Response{
+		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
 			Data:   user,
 		})
@@ -130,7 +130,7 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 
 				render.Status(r, http.StatusConflict)
 
-				render.JSON(w, r, resp.Response{
+				render.JSON(w, r, resp.ErrorResponse{
 					Status: http.StatusConflict,
 					Error:  "user already exists",
 				})
@@ -140,7 +140,7 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 
 			render.Status(r, http.StatusInternalServerError)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusInternalServerError,
 				Error:  "internal error",
 			})
@@ -149,7 +149,7 @@ func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 
 		cookie.SetCookie(w, accessToken, refreshToken)
 
-		render.JSON(w, r, resp.Response{
+		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
 			Data:   user,
 		})

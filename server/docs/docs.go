@@ -223,6 +223,77 @@ const docTemplate = `{
                 }
             }
         },
+        "/user/list-profiles": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns a list of users with a matching username",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "ListProfiles",
+                "operationId": "list-profiles",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of the user after whom the search will take place, 0 if at first",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size of the list of returned users",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/user.ProfilesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/user/myprofile": {
             "get": {
                 "security": [
@@ -404,6 +475,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.Cursor": {
+            "type": "object",
+            "properties": {
+                "next_cursor": {
+                    "type": "integer"
+                },
+                "prev_cursor": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.LoginUser": {
             "type": "object",
             "required": [
@@ -506,6 +588,20 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "integer"
+                }
+            }
+        },
+        "user.ProfilesResponse": {
+            "type": "object",
+            "properties": {
+                "cursors": {
+                    "$ref": "#/definitions/models.Cursor"
+                },
+                "profiles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.UserInfo"
+                    }
                 }
             }
         }

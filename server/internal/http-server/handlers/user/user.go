@@ -75,7 +75,7 @@ func (u *UserHandler) MyProfile(ctx context.Context) http.HandlerFunc {
 
 			render.Status(r, http.StatusInternalServerError)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusInternalServerError,
 				Error:  err.Error(),
 			})
@@ -85,7 +85,7 @@ func (u *UserHandler) MyProfile(ctx context.Context) http.HandlerFunc {
 
 		log.Info("got info")
 
-		render.JSON(w, r, resp.Response{
+		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
 			Data:   info,
 		})
@@ -120,7 +120,7 @@ func (u *UserHandler) Profile(ctx context.Context) http.HandlerFunc {
 
 			render.Status(r, http.StatusConflict)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusConflict,
 				Error:  "invalid request",
 			})
@@ -135,7 +135,7 @@ func (u *UserHandler) Profile(ctx context.Context) http.HandlerFunc {
 
 				render.Status(r, http.StatusNotFound)
 
-				render.JSON(w, r, resp.Response{
+				render.JSON(w, r, resp.ErrorResponse{
 					Status: http.StatusNotFound,
 					Error:  "user not found",
 				})
@@ -146,7 +146,7 @@ func (u *UserHandler) Profile(ctx context.Context) http.HandlerFunc {
 
 			render.Status(r, http.StatusInternalServerError)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusInternalServerError,
 				Error:  "failed to get profile",
 			})
@@ -160,7 +160,7 @@ func (u *UserHandler) Profile(ctx context.Context) http.HandlerFunc {
 
 		// http.Redirect(w, r, path, http.StatusMovedPermanently)
 
-		render.JSON(w, r, resp.Response{
+		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
 			Data:   userInfo,
 		})
@@ -196,7 +196,7 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 
 			render.Status(r, http.StatusOK)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.SuccessResponse{
 				Status: http.StatusOK,
 				Data: ProfilesResponse{
 					Profiles: []models.UserInfo{},
@@ -215,7 +215,7 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 
 			render.Status(r, http.StatusConflict)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusConflict,
 				Error:  "limit is empty",
 			})
@@ -235,7 +235,7 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 
 				render.Status(r, http.StatusInternalServerError)
 
-				render.JSON(w, r, resp.Response{
+				render.JSON(w, r, resp.ErrorResponse{
 					Status: http.StatusInternalServerError,
 					Error:  "failed to convert curosr",
 				})
@@ -250,7 +250,7 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 
 			render.Status(r, http.StatusInternalServerError)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusInternalServerError,
 				Error:  "failed to convert limit",
 			})
@@ -263,7 +263,7 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 
 			render.Status(r, http.StatusBadRequest)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusBadRequest,
 				Error:  "limit must be more than 0",
 			})
@@ -278,7 +278,7 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 
 				render.Status(r, http.StatusOK)
 
-				render.JSON(w, r, resp.Response{
+				render.JSON(w, r, resp.SuccessResponse{
 					Status: http.StatusOK,
 					Data:  ProfilesResponse{
 						Profiles: []models.UserInfo{},
@@ -294,7 +294,7 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 
 			render.Status(r, http.StatusInternalServerError)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusInternalServerError,
 				Error:  "internal error",
 			})
@@ -304,9 +304,12 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 
 		log.Info("got profiles")
 
-		render.JSON(w, r, ProfilesResponse{
-			Profiles: profiles,
-			RCursor: *rcursor,
+		render.JSON(w, r, resp.SuccessResponse{
+			Status: http.StatusOK,
+			Data: ProfilesResponse{
+				Profiles: profiles,
+				RCursor: *rcursor,
+			},
 		})
 	}
 }
@@ -355,7 +358,7 @@ func (u *UserHandler) UpdateInfo(ctx context.Context) http.HandlerFunc {
 			if errors.Is(err, user.ErrUsernameExists) {
 				render.Status(r, http.StatusConflict)
 
-				render.JSON(w, r, resp.Response{
+				render.JSON(w, r, resp.ErrorResponse{
 					Status: http.StatusConflict,
 					Error:  "username already exists",
 				})
@@ -366,7 +369,7 @@ func (u *UserHandler) UpdateInfo(ctx context.Context) http.HandlerFunc {
 			if errors.Is(err, user.ErrEmailExists) {
 				render.Status(r, http.StatusConflict)
 
-				render.JSON(w, r, resp.Response{
+				render.JSON(w, r, resp.ErrorResponse{
 					Status: http.StatusConflict,
 					Error:  "email already exists",
 				})
@@ -377,7 +380,7 @@ func (u *UserHandler) UpdateInfo(ctx context.Context) http.HandlerFunc {
 			if errors.Is(err, user.ErrPasswordsMismatch) {
 				render.Status(r, http.StatusConflict)
 
-				render.JSON(w, r, resp.Response{
+				render.JSON(w, r, resp.ErrorResponse{
 					Status: http.StatusConflict,
 					Error:  "passwords don't match",
 				})
@@ -387,7 +390,7 @@ func (u *UserHandler) UpdateInfo(ctx context.Context) http.HandlerFunc {
 
 			render.Status(r, http.StatusBadRequest)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusBadRequest,
 				Error:  "failed to update user information",
 			})
@@ -397,7 +400,7 @@ func (u *UserHandler) UpdateInfo(ctx context.Context) http.HandlerFunc {
 
 		log.Info("information changed successfully")
 
-		render.JSON(w, r, resp.Response{
+		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
 			Data:   info,
 		})
@@ -410,7 +413,7 @@ func HandleGettingCookie(w http.ResponseWriter, r *http.Request, err error, log 
 
 		render.Status(r, http.StatusUnauthorized)
 
-		render.JSON(w, r, resp.Response{
+		render.JSON(w, r, resp.ErrorResponse{
 			Status: http.StatusUnauthorized,
 			Error:  "failed with getting cookie",
 		})

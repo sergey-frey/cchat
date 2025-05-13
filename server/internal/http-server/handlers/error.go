@@ -19,7 +19,7 @@ func HandleError(w http.ResponseWriter, r *http.Request, req any, err error, log
 
 			render.Status(r, http.StatusConflict)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusConflict,
 				Error:  "empty request",
 			})
@@ -31,7 +31,7 @@ func HandleError(w http.ResponseWriter, r *http.Request, req any, err error, log
 
 		render.Status(r, http.StatusBadRequest)
 
-		render.JSON(w, r, resp.Response{
+		render.JSON(w, r, resp.ErrorResponse{
 			Status: http.StatusBadRequest,
 			Error:  "failed to decode request",
 		})

@@ -14,7 +14,7 @@ func JWTCheck(next http.Handler) http.Handler {
 		if err != nil || token == nil {
 			render.Status(r, http.StatusUnauthorized)
 
-			render.JSON(w, r, resp.Response{
+			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusUnauthorized,
 				Error:  "user unauthorized",
 			})

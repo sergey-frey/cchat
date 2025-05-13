@@ -198,7 +198,10 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 
 			render.JSON(w, r, resp.Response{
 				Status: http.StatusOK,
-				Data: ProfilesResponse{},
+				Data: ProfilesResponse{
+					Profiles: []models.UserInfo{},
+					RCursor: models.Cursor{},
+				},
 			})
 
 			return
@@ -273,14 +276,18 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 			if errors.Is(err, user.ErrUsersNotFound) {
 				log.Warn("users not found")
 
-				render.Status(r, http.StatusBadRequest)
+				render.Status(r, http.StatusOK)
 
 				render.JSON(w, r, resp.Response{
-				Status: http.StatusBadRequest,
-				Error:  "users not found",
-			})
+					Status: http.StatusOK,
+					Data:  ProfilesResponse{
+						Profiles: []models.UserInfo{},
+						RCursor: models.Cursor{},
+					},
+			
+				})
 
-			return
+				return
 			}
 
 			log.Error("internal error")

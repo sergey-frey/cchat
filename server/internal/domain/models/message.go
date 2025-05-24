@@ -4,10 +4,9 @@ import "time"
 
 type Message struct {
 	ID int64
-	TypeMessage string
+	TypeOfMessage string
 	Content string
 	Date time.Time
-	HasBeenEdited bool
-	// Chat
-	// User
+	ChatID int
+	AuthorID int
 }

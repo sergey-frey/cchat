@@ -48,10 +48,10 @@ type ProfilesResponse struct {
 // @ID get-my-profile
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} models.UserInfo
-// @Failure 400,409 {object} response.Response
-// @Failure 500 {object} response.Response
-// @Failure default {object} response.Response
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400,409 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Failure default {object} response.ErrorResponse
 // @Security CookieAuth
 // @Router /user/myprofile [get]
 //go:generate go run github.com/vektra/mockery/v2@v2.53 --name=User
@@ -99,10 +99,10 @@ func (u *UserHandler) MyProfile(ctx context.Context) http.HandlerFunc {
 // @Accept  json
 // @Produce  json
 // @Param username path string true "Existing username"
-// @Success 200 {object} models.UserInfo
-// @Failure 400,404 {object} response.Response
-// @Failure 500 {object} response.Response
-// @Failure default {object} response.Response
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400,404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Failure default {object} response.ErrorResponse
 // @Security CookieAuth
 // @Router /user/profile/{username} [get]
 func (u *UserHandler) Profile(ctx context.Context) http.HandlerFunc {
@@ -175,10 +175,10 @@ func (u *UserHandler) Profile(ctx context.Context) http.HandlerFunc {
 // @Param username query string false "Username"
 // @Param cursor query int false "ID of the user after whom the search will take place, 0 if at first"
 // @Param limit query int true "Size of the list of returned users"
-// @Success 200 {object} user.ProfilesResponse
-// @Failure 400,409 {object} response.Response
-// @Failure 500 {object} response.Response
-// @Failure default {object} response.Response
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400,409 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Failure default {object} response.ErrorResponse
 // @Security CookieAuth
 // @Router /user/list-profiles [get]
 func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
@@ -321,10 +321,10 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 // @Accept  json
 // @Produce  json
 // @Param input body models.NewUserInfo true "The new password is at least 8 characters long and has a valid email address."
-// @Success 200 {object} models.UserInfo
-// @Failure 400,409 {object} response.Response
-// @Failure 500 {object} response.Response
-// @Failure default {object} response.Response
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400,409 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Failure default {object} response.ErrorResponse
 // @Security CookieAuth
 // @Router /user/update [patch]
 func (u *UserHandler) UpdateInfo(ctx context.Context) http.HandlerFunc {

@@ -61,7 +61,7 @@ func (u *UserDataService) MyProfile(ctx context.Context, username string) (*mode
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	log.Info("got info")
+	log.Info("got my profile")
 
 	return info, nil
 }
@@ -74,7 +74,7 @@ func (u *UserDataService) Profile(ctx context.Context, username string) (*models
 		slog.String("username", username),
 	)
 
-	log.Info("getting user information")
+	log.Info("getting profile information")
 
 	info, err := u.userService.Profile(ctx, username)
 	if err != nil {
@@ -89,7 +89,7 @@ func (u *UserDataService) Profile(ctx context.Context, username string) (*models
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	log.Info("got info")
+	log.Info("got profile information")
 
 	return info, nil
 }
@@ -122,7 +122,7 @@ func (u *UserDataService) ListProfiles(ctx context.Context, username string, cur
 }
 
 func (u *UserDataService) UpdateInfo(ctx context.Context, username string, newInfo models.NewUserInfo) (info *models.UserInfo, accessToken string, refreshToken string, err error) {
-	const op = "services.user.UpdateUserInfo"
+	const op = "services.user.UpdateInfo"
 
 	log := u.log.With(
 		slog.String("op", op),

@@ -1,12 +1,5 @@
 basePath: /cchat
 definitions:
-  models.Cursor:
-    properties:
-      next_cursor:
-        type: integer
-      prev_cursor:
-        type: integer
-    type: object
   models.LoginUser:
     properties:
       email:
@@ -18,6 +11,13 @@ definitions:
     required:
     - email
     - password
+    type: object
+  models.NewChat:
+    properties:
+      users:
+        items:
+          type: integer
+        type: array
     type: object
   models.NewUserInfo:
     properties:
@@ -39,15 +39,6 @@ definitions:
         example: arnold2004
         type: string
     type: object
-  models.NormalizedUser:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      username:
-        type: string
-    type: object
   models.RegisterUser:
     properties:
       email:
@@ -61,33 +52,18 @@ definitions:
     - email
     - password
     type: object
-  models.UserInfo:
+  response.ErrorResponse:
     properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      username:
-        type: string
-    type: object
-  response.Response:
-    properties:
-      data: {}
       error:
         type: string
       status:
         type: integer
     type: object
-  user.ProfilesResponse:
+  response.SuccessResponse:
     properties:
-      cursors:
-        $ref: '#/definitions/models.Cursor'
-      profiles:
-        items:
-          $ref: '#/definitions/models.UserInfo'
-        type: array
+      data: {}
+      status:
+        type: integer
     type: object
 host: localhost:8040
 info:
@@ -115,27 +91,27 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.NormalizedUser'
+            $ref: '#/definitions/response.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Login
       tags:
       - auth
@@ -151,11 +127,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.SuccessResponse'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Logout
       tags:
       - auth
@@ -179,27 +155,27 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.NormalizedUser'
+            $ref: '#/definitions/response.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Register
       tags:
       - auth
@@ -215,26 +191,67 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Session
       tags:
       - auth
+  /chat/new:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new chat
+      operationId: create-chat
+      parameters:
+      - description: List of users ID's
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.NewChat'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: NewChat
+      tags:
+      - chat
   /user/list-profiles:
     get:
       description: Returns a list of users with a matching username
@@ -260,23 +277,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/user.ProfilesResponse'
+            $ref: '#/definitions/response.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - CookieAuth: []
       summary: ListProfiles
@@ -294,23 +311,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.UserInfo'
+            $ref: '#/definitions/response.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - CookieAuth: []
       summary: GetMyProfile
@@ -334,23 +351,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.UserInfo'
+            $ref: '#/definitions/response.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - CookieAuth: []
       summary: GetProfile
@@ -376,23 +393,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.UserInfo'
+            $ref: '#/definitions/response.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - CookieAuth: []
       summary: UpdateProfile

@@ -7,7 +7,7 @@ services:
       # Путь до Dockerfile здесь указывается относительно context
       dockerfile: ../dev-config/Dockerfile.client
     ports:
-      - "5173:5173"
+      - '5173:5173'
 
     volumes:
       # Связываем локальную директорию с директорией в контейнере для hot reload'а
@@ -21,16 +21,18 @@ services:
   cchat-server-app:
     build:
       context: ../server
-      dockerfile: "../dev-config/Dockerfile.server"
-    # Bash в контейнере может не распознавать wait-for-postgres.sh из-за CRLF
-    # В таком случае можно изменить формат - `dos2unix ../server/wait-for-postgres.sh`
-    command: ./wait-for-postgres.sh psql ./cchat-server-app
+      dockerfile: '../dev-config/Dockerfile.server'
+    # Bash в контейнере может не распознавать wait-for-db.sh из-за CRLF
+    # В таком случае можно изменить формат - `dos2unix ../server/wait-for-db.sh`
+    command: ./wait-for-db.sh psql ./cchat-server-app
+    environment:
+      - PG_DB_PASSWORD=qwerty
+      - REDIS_DB_PASSWORD=admin12345
     ports:
       - 8040:8040
     depends_on:
       - psql
-    environment:
-      - DB_PASSWORD=qwerty
+      - redis
   psql:
     restart: always
     image: postgres:latest
@@ -38,3 +40,11 @@ services:
       - POSTGRES_PASSWORD=qwerty
     ports:
       - 5443:5432
+  redis:
+    image: redis:latest
+    restart: always
+    command: ['redis-server', '--requirepass', 'admin12345']
+    environment:
+      - REDIS_DB_PASSWORD=admin12345
+    ports:
+      - 6399:6379

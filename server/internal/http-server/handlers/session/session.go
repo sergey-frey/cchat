@@ -19,10 +19,10 @@ import (
 // @ID check-session
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} response.Response
-// @Failure 400,401 {object} response.Response
-// @Failure 500 {object} response.Response
-// @Failure default {object} response.Response
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400,401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Failure default {object} response.ErrorResponse
 // @Router /auth/session [post]
 func CheckSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -72,8 +72,8 @@ func CheckSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 // @ID finish-session
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} response.Response
-// @Failure default {object} response.Response
+// @Success 200 {object} response.SuccessResponse
+// @Failure default {object} response.ErrorResponse
 // @Router /auth/logout [post]
 func FinishSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

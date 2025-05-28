@@ -39,10 +39,10 @@ func New(auth Auth, log *slog.Logger) *AuthHandler {
 // @Accept  json
 // @Produce  json
 // @Param input body models.LoginUser true "valid email and password"
-// @Success 200 {object} models.NormalizedUser
-// @Failure 400,404,409 {object} response.Response
-// @Failure 500 {object} response.Response
-// @Failure default {object} response.Response
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400,404,409 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Failure default {object} response.ErrorResponse
 // @Router /auth/login [post]
 //go:generate go run github.com/vektra/mockery/v2@v2.53 --name=Auth
 func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
@@ -102,10 +102,10 @@ func (a *AuthHandler) Login(ctx context.Context) http.HandlerFunc {
 // @Accept  json
 // @Produce  json
 // @Param input body models.RegisterUser true "valid email and password(minimum of 8 characters)"
-// @Success 200 {object} models.NormalizedUser
-// @Failure 400,404,409 {object} response.Response
-// @Failure 500 {object} response.Response
-// @Failure default {object} response.Response
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400,404,409 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Failure default {object} response.ErrorResponse
 // @Router /auth/register [post]
 func (a *AuthHandler) Register(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

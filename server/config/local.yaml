@@ -3,12 +3,20 @@ env: "local"
 token_ttl: 1h
 client_domen: "http://localhost:5173"
 
-db:
+psql:
   username: "postgres"
   host: "psql"
   port: "5432"
   dbname: "postgres"
   sslmode: "disable"
+
+redis:
+  address: redis:6379
+  user: admin
+  db: 0
+  max_retries: 5
+  dial_timeout: 10s
+  timeout: 5s
 
 http_server:
   server_port: "0.0.0.0:8040"

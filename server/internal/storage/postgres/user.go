@@ -135,7 +135,6 @@ func (s *Storage) ListProfiles(ctx context.Context, username string, cursor int6
 	`, pagination, limitQ)
 
 	rows, err := s.pool.Query(ctx, stmt, values...)
-	fmt.Println(rows, err)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil, fmt.Errorf("%s: %w", op, storage.ErrUsersNotFound)

@@ -3,13 +3,13 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"sync"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"sync"
 )
 
 type Storage struct {
 	pool *pgxpool.Pool
-	mx sync.Mutex
+	mx   sync.Mutex
 }
 
 func New(ctx context.Context, storagePath string) (*Storage, error) {
@@ -22,7 +22,7 @@ func New(ctx context.Context, storagePath string) (*Storage, error) {
 
 	return &Storage{
 		pool: pool,
-		mx: sync.Mutex{},
+		mx:   sync.Mutex{},
 	}, nil
 }
 

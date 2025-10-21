@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	_ "net/http/pprof"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -81,7 +82,7 @@ func main() {
 	chatHandler := chatHandler.New(chatService, redisPool, log)
 
 	migrator.NewMigration("postgres://postgres:qwerty@psql:5432/postgres?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
-	
+
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8040/swagger/doc.json"), //The url pointing to API definition
 	))
@@ -102,8 +103,8 @@ func main() {
 
 	router.With(jwtcheck.JWTCheck).Route("/cchat/chat", func(r chi.Router) {
 		r.Post("/new", chatHandler.NewChat(context.Background()))
+		r.Get("/list-chats", chatHandler.ListChats(context.Background()))
 	})
-
 
 	log.Info("starting server")
 

@@ -29,7 +29,7 @@ type NewUserInfo struct {
 	PreviousPassword string `json:"previous_password,omitempty" validate:"omitempty" example:"12345678"`
 	NewPassword      string `json:"new_password,omitempty" validate:"omitempty,gte=8" example:"123456789"`
 	Username         string `json:"username,omitempty" validate:"omitempty" example:"arnold2004"`
-	Name             string `json:"name,omitempty" validate:"omitempty,gte=1" example:"Arnold"`
+	Name             string `json:"name,omitempty" validate:"omitempty,min=1" example:"Arnold"`
 }
 
 type NormalizedUser struct {

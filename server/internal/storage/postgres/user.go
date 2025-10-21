@@ -11,7 +11,6 @@ import (
 	"github.com/sergey-frey/cchat/internal/storage"
 )
 
-
 func (s *Storage) MyProfile(ctx context.Context, username string) (*models.UserInfo, error) {
 	const op = "storage.postgres.user.MyProfile"
 
@@ -20,7 +19,7 @@ func (s *Storage) MyProfile(ctx context.Context, username string) (*models.UserI
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	defer func ()  {
+	defer func() {
 		if err != nil {
 			_ = tx.Rollback(ctx)
 			return
@@ -48,7 +47,6 @@ func (s *Storage) MyProfile(ctx context.Context, username string) (*models.UserI
 	return &info, nil
 }
 
-
 func (s *Storage) Profile(ctx context.Context, username string) (*models.UserInfo, error) {
 	const op = "storage.postgres.user.Profile"
 
@@ -57,7 +55,7 @@ func (s *Storage) Profile(ctx context.Context, username string) (*models.UserInf
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	defer func ()  {
+	defer func() {
 		if err != nil {
 			_ = tx.Rollback(ctx)
 			return
@@ -159,7 +157,7 @@ func (s *Storage) ListProfiles(ctx context.Context, username string, cursor int6
 	if len(profiles) == 0 {
 		return nil, nil, fmt.Errorf("%s: %w", op, storage.ErrUsersNotFound)
 	}
-		
+
 	if len(profiles) < 2 {
 		rcursor = &models.Cursor{
 			PrevCursor: profiles[len(profiles)-1].ID,
@@ -170,13 +168,13 @@ func (s *Storage) ListProfiles(ctx context.Context, username string, cursor int6
 	if len(profiles) >= 2 {
 		if len(profiles) <= limit {
 			rcursor = &models.Cursor{
-				PrevCursor:	profiles[len(profiles)-1].ID,
+				PrevCursor: profiles[len(profiles)-1].ID,
 			}
 			return profiles, rcursor, nil
 		}
 		if len(profiles) > limit {
 			rcursor = &models.Cursor{
-				PrevCursor:	profiles[len(profiles)-2].ID,
+				PrevCursor: profiles[len(profiles)-2].ID,
 				NextCursor: profiles[len(profiles)-1].ID,
 			}
 		}
@@ -185,8 +183,7 @@ func (s *Storage) ListProfiles(ctx context.Context, username string, cursor int6
 	return profiles[:len(profiles)-1], rcursor, nil
 }
 
-
-func (s *Storage) ChangeUsername(ctx context.Context, oldUsername string,  newUsername string) (*models.UserInfo, error)  {
+func (s *Storage) ChangeUsername(ctx context.Context, oldUsername string, newUsername string) (*models.UserInfo, error) {
 	const op = "storage.postgres.user.ChangeUsername"
 
 	tx, err := s.pool.Begin(ctx)
@@ -199,7 +196,7 @@ func (s *Storage) ChangeUsername(ctx context.Context, oldUsername string,  newUs
 			_ = tx.Rollback(ctx)
 			return
 		}
-		
+
 		commitErr := tx.Commit(ctx)
 		if commitErr != nil {
 			err = fmt.Errorf("%s: %w", op, commitErr)
@@ -222,15 +219,14 @@ func (s *Storage) ChangeUsername(ctx context.Context, oldUsername string,  newUs
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return nil, fmt.Errorf("%s: %w", op, storage.ErrUsernameExists)
 		}
-		
+
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return &info, nil
 }
 
-
-func (s *Storage) ChangeEmail(ctx context.Context, username string,  newEmail string) (*models.UserInfo, error)  {
+func (s *Storage) ChangeEmail(ctx context.Context, username string, newEmail string) (*models.UserInfo, error) {
 	const op = "storage.postgres.user.ChangeEmail"
 
 	tx, err := s.pool.Begin(ctx)
@@ -243,7 +239,7 @@ func (s *Storage) ChangeEmail(ctx context.Context, username string,  newEmail st
 			_ = tx.Rollback(ctx)
 			return
 		}
-		
+
 		commitErr := tx.Commit(ctx)
 		if commitErr != nil {
 			err = fmt.Errorf("%s: %w", op, commitErr)
@@ -266,20 +262,19 @@ func (s *Storage) ChangeEmail(ctx context.Context, username string,  newEmail st
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return nil, fmt.Errorf("%s: %w", op, storage.ErrEmailExists)
 		}
-		
+
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return &info, nil
 }
 
-
 func (s *Storage) ChangeName(ctx context.Context, username string, newName string) (*models.UserInfo, error) {
 	const op = "storage.postgres.user.ChangeName"
 
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op , err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	defer func() {
@@ -311,13 +306,12 @@ func (s *Storage) ChangeName(ctx context.Context, username string, newName strin
 	return &info, nil
 }
 
-
-func (s *Storage) ChangePassword(ctx context.Context, username string, newPasswordHash []byte) (error) {
+func (s *Storage) ChangePassword(ctx context.Context, username string, newPasswordHash []byte) error {
 	const op = "storage.postgres.user.ChangePassword"
 
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op , err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	defer func() {
@@ -349,17 +343,16 @@ func (s *Storage) ChangePassword(ctx context.Context, username string, newPasswo
 	if id != 0 {
 		return nil
 	}
-	
+
 	return nil
 }
-
 
 func (s *Storage) Password(ctx context.Context, username string) (password []byte, err error) {
 	const op = "storage.postgres.user.Password"
 
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op , err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	defer func() {
@@ -387,5 +380,3 @@ func (s *Storage) Password(ctx context.Context, username string) (password []byt
 
 	return password, nil
 }
-	
-	

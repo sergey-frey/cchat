@@ -5,7 +5,7 @@ type NewChat struct {
 }
 
 type Chat struct {
-	ID int64
-	Users []UserInfo
-	Messages []Message
+	ID          int64 `json:"id"`
+	Users       []UserInfo
+	LastMessage *Message `json:"last_message"`
 }

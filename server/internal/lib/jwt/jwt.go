@@ -8,16 +8,14 @@ import (
 	"github.com/sergey-frey/cchat/internal/domain/models"
 )
 
-
 const (
-	accessDuration = 15 * time.Minute
-	refreshDuration =  43200 * time.Minute
+	accessDuration  = 15 * time.Minute
+	refreshDuration = 43200 * time.Minute
 )
 
 var (
 	ErrUserUnauthorized = errors.New("user unauthorized")
 )
-
 
 func NewPairTokens(user models.NormalizedUser) (string, string, error) {
 	accessToken := jwt.New(jwt.SigningMethodHS256)
@@ -47,7 +45,6 @@ func NewPairTokens(user models.NormalizedUser) (string, string, error) {
 
 }
 
-
 func VerifyAccessToken(accessToken string, refreshToken string) (string, string, *models.NormalizedUser, error) {
 	accesstoken, _ := jwt.Parse(accessToken, func(token *jwt.Token) (any, error) {
 		return []byte("somesecret"), nil
@@ -55,26 +52,25 @@ func VerifyAccessToken(accessToken string, refreshToken string) (string, string,
 
 	claims := accesstoken.Claims.(jwt.MapClaims)
 	var user = models.NormalizedUser{
-		ID: int64(claims["uid"].(float64)),
+		ID:       int64(claims["uid"].(float64)),
 		Username: claims["username"].(string),
-		Email: claims["email"].(string),
+		Email:    claims["email"].(string),
 	}
 
 	if !accesstoken.Valid {
-		newAccessToken, newRefreshToken, user, err := VerifyRefreshToken(user, refreshToken)	
+		newAccessToken, newRefreshToken, user, err := VerifyRefreshToken(user, refreshToken)
 		return newAccessToken, newRefreshToken, user, err
 	}
 
-	return "", "", &user, nil 
+	return "", "", &user, nil
 }
-
 
 func VerifyRefreshToken(user models.NormalizedUser, refreshToken string) (string, string, *models.NormalizedUser, error) {
 
 	refreshtoken, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
-			return []byte("secret"), nil
-		})
-	
+		return []byte("secret"), nil
+	})
+
 	if err != nil {
 		return "", "", nil, err
 	}
@@ -84,7 +80,7 @@ func VerifyRefreshToken(user models.NormalizedUser, refreshToken string) (string
 	}
 
 	newAccessToken, newRefreshToken, err := NewPairTokens(user)
-	if err != nil {				
+	if err != nil {
 		return "", "", nil, err
 	}
 

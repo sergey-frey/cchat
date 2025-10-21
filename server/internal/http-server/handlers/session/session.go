@@ -43,10 +43,10 @@ func CheckSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 					Status: http.StatusUnauthorized,
 					Error:  "user unauthorized",
 				})
-				
+
 				return
 			}
-			
+
 			log.Error("error with check session", sl.Err(err))
 
 			render.Status(r, http.StatusInternalServerError)
@@ -87,7 +87,7 @@ func FinishSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 
 		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
-			Data: "success logout",
+			Data:   "success logout",
 		})
 
 	}

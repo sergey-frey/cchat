@@ -11,7 +11,7 @@ HOST="${REDIS_HOST:-redis}"
 PORT="${REDIS_PORT:-6379}"
 PASSWORD="${REDIS_DB_PASSWORD}"
 
-until PGPASSWORD=$PG_DB_PASSWORD psql -h "$host" -U "postgres" -c '\q';
+until nc -z "$host" 5432;
 do
     >&2 echo "Postgres is unavailable - sleeping"
     sleep 1
@@ -19,7 +19,7 @@ done
 
 >&2 echo "Postgres is up - executing command"
 
-until redis-cli -h "$HOST" -p "$PORT" -a "$PASSWORD" ping | grep -q PONG;
+until nc -z "$HOST" "$PORT";
 do
     >&2 echo "Redis is unavailable - sleeping"
     sleep 1

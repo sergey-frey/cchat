@@ -34,6 +34,3 @@ func (h *DiscardHandler) Enabled(_ context.Context, _ slog.Level) bool {
 	//Всегда возвращает false, так как запись журнала игнорируется
 	return false
 }
-
-
-

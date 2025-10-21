@@ -29,9 +29,14 @@ func TestGetUserInfo_HappyPath(t *testing.T) {
 		Expect().
 		Status(http.StatusOK)
 
+	username := e.GET("/cchat/user/myprofile").
+		Expect().JSON().
+		Object().Value("username").
+		String().Raw()
+
 	e.GET("/cchat/user/profile/{username}").
-	WithPath("username", "weeq").
-	Expect().Status(http.StatusOK)
+		WithPath("username", username).
+		Expect().Status(http.StatusOK)
 }
 
 func TestUpdateUserInfo_HappyPath(t *testing.T) {
@@ -170,8 +175,8 @@ func TestUpdateUsername_FailCases(t *testing.T) {
 
 			resp := e.PATCH("/cchat/user/update").
 				WithJSON(models.NewUserInfo{
-					Username:         tt.username,
-					Name:             tt.name,
+					Username: tt.username,
+					Name:     tt.name,
 				}).Expect().JSON().Object()
 
 			if tt.expectedErr != "" {

@@ -12,10 +12,10 @@ func NewCORS(h http.Handler) http.Handler {
 		AllowedMethods:   []string{http.MethodPost, http.MethodDelete, http.MethodGet, http.MethodPut, http.MethodPatch},
 		AllowedHeaders:   []string{"Origin", "Content-Type", "Authorization", "cache-control"},
 		AllowCredentials: true,
-		MaxAge: 120,			
+		MaxAge:           120,
 	})
 
 	h = c.Handler(h)
-		
+
 	return h
 }

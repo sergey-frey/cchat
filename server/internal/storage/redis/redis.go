@@ -9,7 +9,6 @@ import (
 	"github.com/sergey-frey/cchat/internal/config"
 )
 
-
 type RedisStorage struct {
 	client *redis.Client
 }
@@ -18,12 +17,12 @@ func New(ctx context.Context, cfg config.RedisDB) (*RedisStorage, error) {
 	const op = "storage.redis.New"
 
 	db := redis.NewClient(&redis.Options{
-		Addr: cfg.Address,
-		Password: os.Getenv("REDIS_DB_PASSWORD"),
-		DB: cfg.DB,
-		MaxRetries: cfg.MaxRetries,
-		DialTimeout: cfg.DialTimeout,
-		ReadTimeout: cfg.Timeout,
+		Addr:         cfg.Address,
+		Password:     os.Getenv("REDIS_DB_PASSWORD"),
+		DB:           cfg.DB,
+		MaxRetries:   cfg.MaxRetries,
+		DialTimeout:  cfg.DialTimeout,
+		ReadTimeout:  cfg.Timeout,
 		WriteTimeout: cfg.Timeout,
 	})
 

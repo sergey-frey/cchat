@@ -52,7 +52,6 @@ func (s *Storage) SaveUser(ctx context.Context, name string, username string, em
 	return &user, err
 }
 
-
 func (s *Storage) User(ctx context.Context, email string) (*models.User, error) {
 	const op = "storage.postgres.User"
 

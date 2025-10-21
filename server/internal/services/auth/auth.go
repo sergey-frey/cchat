@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"github.com/sergey-frey/cchat/internal/domain/models"
 	"github.com/sergey-frey/cchat/internal/lib/jwt"
-	genusername "github.com/sergey-frey/cchat/internal/lib/username"
 	"github.com/sergey-frey/cchat/internal/lib/logger/sl"
+	genusername "github.com/sergey-frey/cchat/internal/lib/username"
 	"github.com/sergey-frey/cchat/internal/storage"
 	"golang.org/x/crypto/bcrypt"
+	"log/slog"
 )
 
 type Auth interface {
@@ -20,7 +20,7 @@ type Auth interface {
 
 type AuthService struct {
 	auth Auth
-	log *slog.Logger
+	log  *slog.Logger
 }
 
 var (
@@ -30,11 +30,10 @@ var (
 	ErrUserNotFound       = errors.New("user not found")
 )
 
-
 func New(auth Auth, log *slog.Logger) *AuthService {
 	return &AuthService{
 		auth: auth,
-		log: log,
+		log:  log,
 	}
 }
 
@@ -80,7 +79,6 @@ func (a *AuthService) Login(ctx context.Context, loginUser models.LoginUser) (*m
 
 	return &normalUser, accessToken, refreshToken, err
 }
-
 
 func (a *AuthService) RegisterNewUser(ctx context.Context, email string, pass string) (*models.NormalizedUser, string, string, error) {
 	const op = "auth.RegisterNewUser"

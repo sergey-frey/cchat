@@ -11,15 +11,15 @@ import (
 )
 
 const (
-	host = "localhost:8040"
-	normalLengthPass = 12
+	host                = "localhost:8040"
+	normalLengthPass    = 12
 	notEnoughLengthPass = 6
 )
 
 func TestCchatAuth_HappyPath(t *testing.T) {
 	u := url.URL{
 		Scheme: "http",
-		Host: host,
+		Host:   host,
 	}
 
 	e := httpexpect.Default(t, u.String())
@@ -29,7 +29,7 @@ func TestCchatAuth_HappyPath(t *testing.T) {
 
 	e.POST("/cchat/auth/register").
 		WithJSON(models.RegisterUser{
-			Email: email,
+			Email:    email,
 			Password: password,
 		}).
 		Expect().
@@ -37,7 +37,7 @@ func TestCchatAuth_HappyPath(t *testing.T) {
 
 	e.POST("/cchat/auth/login").
 		WithJSON(models.LoginUser{
-			Email: email,
+			Email:    email,
 			Password: password,
 		}).
 		Expect().
@@ -46,39 +46,39 @@ func TestCchatAuth_HappyPath(t *testing.T) {
 
 func TestRegister_FailCases(t *testing.T) {
 	cases := []struct {
-		name string
-		email string
-		password string
+		name      string
+		email     string
+		password  string
 		respError string
 	}{
 		{
-			name: "Register with empty email",
-			email: "",
-			password: randomFakePassword(normalLengthPass),
+			name:      "Register with empty email",
+			email:     "",
+			password:  randomFakePassword(normalLengthPass),
 			respError: "field Email is a required field",
 		},
 		{
-			name: "Register with empty password",
-			email: gofakeit.Email(),
-			password: "",
+			name:      "Register with empty password",
+			email:     gofakeit.Email(),
+			password:  "",
 			respError: "field Password is a required field",
 		},
 		{
-			name: "Register with both empty",
-			email: "",
-			password: "",
+			name:      "Register with both empty",
+			email:     "",
+			password:  "",
 			respError: "field Email is a required field, field Password is a required field",
 		},
 		{
-			name: "Register with invalid email",
-			email: gofakeit.Username(),
-			password: randomFakePassword(normalLengthPass),
+			name:      "Register with invalid email",
+			email:     gofakeit.Username(),
+			password:  randomFakePassword(normalLengthPass),
 			respError: "field Email must be of the email type",
 		},
 		{
-			name: "Register with invalid passsword",
-			email: gofakeit.Email(),
-			password: randomFakePassword(notEnoughLengthPass),
+			name:      "Register with invalid passsword",
+			email:     gofakeit.Email(),
+			password:  randomFakePassword(notEnoughLengthPass),
 			respError: "field Password must have at least 8 characters",
 		},
 	}
@@ -88,14 +88,14 @@ func TestRegister_FailCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			u := url.URL{
 				Scheme: "http",
-				Host: "localhost:8040",
+				Host:   "localhost:8040",
 			}
 
 			e := httpexpect.Default(t, u.String())
 
 			resp := e.POST("/cchat/auth/register").
 				WithJSON(models.RegisterUser{
-					Email: tt.email,
+					Email:    tt.email,
 					Password: tt.password,
 				}).Expect().JSON().Object()
 
@@ -109,39 +109,37 @@ func TestRegister_FailCases(t *testing.T) {
 		})
 	}
 }
-		
-
 
 func TestLogin_FailCases(t *testing.T) {
-	cases := []struct{
-		name string
-		username string
-		email string
-		password string
+	cases := []struct {
+		name        string
+		username    string
+		email       string
+		password    string
 		expectedErr string
 	}{
 		{
-			name: "Login without email",
-			email: "",
-			password: randomFakePassword(normalLengthPass),
+			name:        "Login without email",
+			email:       "",
+			password:    randomFakePassword(normalLengthPass),
 			expectedErr: "field Email is a required field",
 		},
 		{
-			name: "Login without password",
-			email: gofakeit.Email(),
-			password: "",
+			name:        "Login without password",
+			email:       gofakeit.Email(),
+			password:    "",
 			expectedErr: "field Password is a required field",
 		},
 		{
-			name: "Login with invalid email",
-			email: gofakeit.Username(),
-			password: randomFakePassword(normalLengthPass),
+			name:        "Login with invalid email",
+			email:       gofakeit.Username(),
+			password:    randomFakePassword(normalLengthPass),
 			expectedErr: "field Email must be of the email type",
 		},
 		{
-			name: "Login with invalid password",
-			email: gofakeit.Email(),
-			password: randomFakePassword(notEnoughLengthPass),
+			name:        "Login with invalid password",
+			email:       gofakeit.Email(),
+			password:    randomFakePassword(notEnoughLengthPass),
 			expectedErr: "invalid email or password",
 		},
 	}
@@ -150,16 +148,16 @@ func TestLogin_FailCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			u := url.URL{
 				Scheme: "http",
-				Host: host,
+				Host:   host,
 			}
 
 			e := httpexpect.Default(t, u.String())
 
 			resp := e.POST("/cchat/auth/login").
 				WithJSON(models.RegisterUser{
-					Email: tt.email,
+					Email:    tt.email,
 					Password: tt.password,
-			}).Expect().JSON().Object()
+				}).Expect().JSON().Object()
 
 			if tt.expectedErr != "" {
 				resp.NotContainsKey("data")

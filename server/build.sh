@@ -1,2 +1,2 @@
-cd ../dev-config/
-docker-compose up --build --force-recreate
+cd ../dev-config
+docker-compose up --build

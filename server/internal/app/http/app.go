@@ -11,20 +11,20 @@ import (
 )
 
 type App struct {
-	log *slog.Logger
+	log        *slog.Logger
 	httpServer *http.Server
 }
 
 func New(log *slog.Logger, cfg *config.Config, router chi.Router) *App {
 	httpServer := http.Server{
-		Addr: cfg.Server.Port,
-		Handler: router,
-		ReadTimeout: cfg.Server.Timeout,
+		Addr:         cfg.Server.Port,
+		Handler:      router,
+		ReadTimeout:  cfg.Server.Timeout,
 		WriteTimeout: cfg.Server.Timeout,
-		IdleTimeout: cfg.Server.Idle_timeout,
+		IdleTimeout:  cfg.Server.Idle_timeout,
 	}
 
-	return &App{log:log, httpServer: &httpServer}
+	return &App{log: log, httpServer: &httpServer}
 }
 
 func (a *App) Run() error {

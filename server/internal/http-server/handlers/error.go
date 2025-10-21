@@ -53,3 +53,20 @@ func HandleError(w http.ResponseWriter, r *http.Request, req any, err error, log
 
 	return true
 }
+
+func HandleGettingCookie(w http.ResponseWriter, r *http.Request, err error, log *slog.Logger) bool {
+	if err != nil {
+		log.Error("failed to take user info")
+
+		render.Status(r, http.StatusUnauthorized)
+
+		render.JSON(w, r, resp.ErrorResponse{
+			Status: http.StatusUnauthorized,
+			Error:  "failed with getting cookie",
+		})
+
+		return false
+	}
+
+	return true
+}

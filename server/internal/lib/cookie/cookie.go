@@ -9,13 +9,13 @@ import (
 	"github.com/sergey-frey/cchat/internal/lib/jwt"
 )
 
-func TakeUserInfo(w http.ResponseWriter, r *http.Request) (string, error) {
+func TakeUserInfo(w http.ResponseWriter, r *http.Request) (*models.NormalizedUser, error) {
 	user, err := CheckCookie(w, r)
 	if err != nil {
-		return "", fmt.Errorf("error with taking cookie")
+		return nil, fmt.Errorf("error with taking cookie")
 	}
 
-	return user.Username, nil
+	return user, nil
 }
 
 func SetCookie(w http.ResponseWriter, accessToken string, refreshToken string) {

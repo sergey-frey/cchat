@@ -2,19 +2,24 @@ package chat
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"github.com/sergey-frey/cchat/internal/domain/models"
 	"github.com/sergey-frey/cchat/internal/http-server/handlers"
-	"github.com/sergey-frey/cchat/internal/lib/logger/sl"
 	resp "github.com/sergey-frey/cchat/internal/lib/api/response"
+	"github.com/sergey-frey/cchat/internal/lib/cookie"
+	"github.com/sergey-frey/cchat/internal/lib/logger/sl"
+	"github.com/sergey-frey/cchat/internal/services/chat"
 )
 
 type Chat interface {
 	NewChat(ctx context.Context, users []int64) (chatID int64, err error)
+	ListChats(ctx context.Context, currUser int64, username string, cursor int64, limit int) (chats []models.Chat, cursors *models.Cursor, err error)
 }
 
 type ChatRedis interface {
@@ -25,17 +30,22 @@ type ChatRedis interface {
 }
 
 type ChatHandler struct {
-	chatHandler Chat
+	chatHandler      Chat
 	chatRedisHandler ChatRedis
-	log *slog.Logger
+	log              *slog.Logger
 }
 
 func New(chatProvider Chat, chatRedisProvider ChatRedis, log *slog.Logger) *ChatHandler {
 	return &ChatHandler{
-		chatHandler: chatProvider,
+		chatHandler:      chatProvider,
 		chatRedisHandler: chatRedisProvider,
-		log: log,
+		log:              log,
 	}
+}
+
+type ChatResponse struct {
+	Chats   []models.Chat `json:"chats"`
+	RCursor models.Cursor `json:"cursors"`
 }
 
 // @Summary NewChat
@@ -54,7 +64,7 @@ func New(chatProvider Chat, chatRedisProvider ChatRedis, log *slog.Logger) *Chat
 func (ch *ChatHandler) NewChat(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.chat.NewChat"
-		
+
 		log := ch.log.With(
 			slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
@@ -72,7 +82,7 @@ func (ch *ChatHandler) NewChat(ctx context.Context) http.HandlerFunc {
 
 			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusBadRequest,
-				Error: "list of users is empty",
+				Error:  "list of users is empty",
 			})
 
 			return
@@ -84,7 +94,7 @@ func (ch *ChatHandler) NewChat(ctx context.Context) http.HandlerFunc {
 
 			render.JSON(w, r, resp.ErrorResponse{
 				Status: http.StatusInternalServerError,
-				Error: "failed to create new chat",
+				Error:  "failed to create new chat",
 			})
 
 			return
@@ -94,7 +104,136 @@ func (ch *ChatHandler) NewChat(ctx context.Context) http.HandlerFunc {
 
 		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
-			Data: chatID,
+			Data:   chatID,
+		})
+	}
+}
+
+func (ch *ChatHandler) ListChats(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		const op = "handlers.chat.Chat"
+
+		log := ch.log.With(
+			slog.String("op", op),
+			slog.String("request_id", middleware.GetReqID(r.Context())),
+		)
+
+		userInfo, err := cookie.TakeUserInfo(w, r)
+		if flag := handlers.HandleGettingCookie(w, r, err, log); !flag {
+			return
+		}
+
+		username := r.URL.Query().Get("username")
+		if username == "" {
+			log.Warn("username is empty")
+
+			render.Status(r, http.StatusOK)
+
+			render.JSON(w, r, resp.SuccessResponse{
+				Status: http.StatusOK,
+				Data: ChatResponse{
+					Chats:   []models.Chat{},
+					RCursor: models.Cursor{},
+				},
+			})
+
+			return
+		}
+
+		stringCursor := r.URL.Query().Get("cursor")
+
+		stringPageSize := r.URL.Query().Get("limit")
+		if stringPageSize == "" {
+			log.Warn("limit is empty")
+
+			render.Status(r, http.StatusConflict)
+
+			render.JSON(w, r, resp.ErrorResponse{
+				Status: http.StatusConflict,
+				Error:  "limit is empty",
+			})
+
+			return
+		}
+
+		var cursor int64
+
+		if stringCursor == "" {
+			cursor = 0
+		} else {
+			cursor, err = strconv.ParseInt(stringCursor, 10, 64)
+			if err != nil {
+				log.Error("failed to convert cursor")
+
+				render.Status(r, http.StatusInternalServerError)
+
+				render.JSON(w, r, resp.ErrorResponse{
+					Status: http.StatusInternalServerError,
+					Error:  "failed to convert curosr",
+				})
+
+				return
+			}
+		}
+
+		limit, err := strconv.Atoi(stringPageSize)
+		if err != nil {
+			log.Warn("failed to convert limit")
+
+			render.Status(r, http.StatusInternalServerError)
+
+			render.JSON(w, r, resp.ErrorResponse{
+				Status: http.StatusInternalServerError,
+				Error:  "failed to convert limit",
+			})
+
+			return
+		}
+
+		if limit < 1 {
+			log.Warn("limit must be more than 0")
+
+			render.Status(r, http.StatusBadRequest)
+
+			render.JSON(w, r, resp.ErrorResponse{
+				Status: http.StatusBadRequest,
+				Error:  "limit must be more than 0",
+			})
+
+			return
+		}
+
+		chats, cursors, err := ch.chatHandler.ListChats(ctx, userInfo.ID, username, cursor, limit)
+		if err != nil {
+			if errors.Is(err, chat.ErrChatsNotFound) {
+				log.Warn("chats not found")
+
+				render.JSON(w, r, resp.ErrorResponse{
+					Status: http.StatusBadRequest,
+					Error:  "chats not found",
+				})
+
+				return
+			}
+
+			log.Error("failed to get chats")
+
+			render.JSON(w, r, resp.ErrorResponse{
+				Status: http.StatusInternalServerError,
+				Error:  "failed to get chats",
+			})
+
+			return
+		}
+
+		log.Info("got chats")
+
+		render.JSON(w, r, resp.SuccessResponse{
+			Status: http.StatusOK,
+			Data: ChatResponse{
+				Chats:   chats,
+				RCursor: *cursors,
+			},
 		})
 	}
 }
@@ -107,19 +246,18 @@ func (cs *ChatHandler) AddOnline() http.HandlerFunc {
 
 func (cs *ChatHandler) SetOnline() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		
+
 	}
 }
 
 func (cs *ChatHandler) SetOfline() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		
+
 	}
 }
 
 func (cs *ChatHandler) UpdateOnline() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		
+
 	}
 }
-

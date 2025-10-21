@@ -39,7 +39,7 @@ func New(userProvider User, log *slog.Logger) *UserHandler {
 
 type ProfilesResponse struct {
 	Profiles []models.UserInfo `json:"profiles"`
-	RCursor models.Cursor `json:"cursors"`
+	RCursor  models.Cursor     `json:"cursors"`
 }
 
 // @Summary GetMyProfile
@@ -54,6 +54,7 @@ type ProfilesResponse struct {
 // @Failure default {object} response.ErrorResponse
 // @Security CookieAuth
 // @Router /user/myprofile [get]
+//
 //go:generate go run github.com/vektra/mockery/v2@v2.53 --name=User
 func (u *UserHandler) MyProfile(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -64,12 +65,12 @@ func (u *UserHandler) MyProfile(ctx context.Context) http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		username, err := cookie.TakeUserInfo(w, r)
-		if flag := HandleGettingCookie(w, r, err, log); !flag {
+		userInfo, err := cookie.TakeUserInfo(w, r)
+		if flag := handlers.HandleGettingCookie(w, r, err, log); !flag {
 			return
 		}
 
-		info, err := u.userHandler.MyProfile(ctx, username)
+		info, err := u.userHandler.MyProfile(ctx, userInfo.Username)
 		if err != nil {
 			log.Error("failed to get info")
 
@@ -200,7 +201,7 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 				Status: http.StatusOK,
 				Data: ProfilesResponse{
 					Profiles: []models.UserInfo{},
-					RCursor: models.Cursor{},
+					RCursor:  models.Cursor{},
 				},
 			})
 
@@ -280,11 +281,10 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 
 				render.JSON(w, r, resp.SuccessResponse{
 					Status: http.StatusOK,
-					Data:  ProfilesResponse{
+					Data: ProfilesResponse{
 						Profiles: []models.UserInfo{},
-						RCursor: models.Cursor{},
+						RCursor:  models.Cursor{},
 					},
-			
 				})
 
 				return
@@ -308,7 +308,7 @@ func (u *UserHandler) ListProfiles(ctx context.Context) http.HandlerFunc {
 			Status: http.StatusOK,
 			Data: ProfilesResponse{
 				Profiles: profiles,
-				RCursor: *rcursor,
+				RCursor:  *rcursor,
 			},
 		})
 	}
@@ -343,12 +343,12 @@ func (u *UserHandler) UpdateInfo(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		username, err := cookie.TakeUserInfo(w, r)
-		if flag := HandleGettingCookie(w, r, err, log); !flag {
+		userInfo, err := cookie.TakeUserInfo(w, r)
+		if flag := handlers.HandleGettingCookie(w, r, err, log); !flag {
 			return
 		}
 
-		info, accessToken, refreshToken, err := u.userHandler.UpdateInfo(ctx, username, newInfo)
+		info, accessToken, refreshToken, err := u.userHandler.UpdateInfo(ctx, userInfo.Username, newInfo)
 
 		if refreshToken != "" {
 			cookie.SetCookie(w, accessToken, refreshToken)
@@ -405,21 +405,4 @@ func (u *UserHandler) UpdateInfo(ctx context.Context) http.HandlerFunc {
 			Data:   info,
 		})
 	}
-}
-
-func HandleGettingCookie(w http.ResponseWriter, r *http.Request, err error, log *slog.Logger) bool {
-	if err != nil {
-		log.Error("failed to take user info")
-
-		render.Status(r, http.StatusUnauthorized)
-
-		render.JSON(w, r, resp.ErrorResponse{
-			Status: http.StatusUnauthorized,
-			Error:  "failed with getting cookie",
-		})
-
-		return false
-	}
-
-	return true
 }

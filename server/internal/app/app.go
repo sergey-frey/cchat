@@ -10,7 +10,7 @@ import (
 
 type App struct {
 	HTTPServer *httpapp.App
-	log *slog.Logger
+	log        *slog.Logger
 }
 
 func New(log *slog.Logger, cfg *config.Config, router chi.Router) *App {
@@ -19,6 +19,6 @@ func New(log *slog.Logger, cfg *config.Config, router chi.Router) *App {
 
 	return &App{
 		HTTPServer: httpApp,
-		log: log,
+		log:        log,
 	}
 }

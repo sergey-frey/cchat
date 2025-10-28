@@ -1,50 +1,83 @@
+version: '3.8'
 services:
-  client:
+  # client:
+  #   build:
+  #     # Поскольку docker-compose не в корне client,
+  #     # нужно указать context с путём до client относительно docker-compose
+  #     context: ../client
+  #     # Путь до Dockerfile здесь указывается относительно context
+  #     dockerfile: ../dev-config/Dockerfile.client
+  #   ports:
+  #     - '5173:5173'
+
+  #   volumes:
+  #     # Связываем локальную директорию с директорией в контейнере для hot reload'а
+  #     - ../client:/usr/app
+  #     - /usr/app/node_modules
+
+  #   environment:
+  #     - MODE=develop
+
+  #   command: bash -c "npm install && npm run dev"
+  auth-service:
     build:
-      # Поскольку docker-compose не в корне client,
-      # нужно указать context с путём до client относительно docker-compose
-      context: ../client
-      # Путь до Dockerfile здесь указывается относительно context
-      dockerfile: ../dev-config/Dockerfile.client
-    ports:
-      - '5173:5173'
-
-    volumes:
-      # Связываем локальную директорию с директорией в контейнере для hot reload'а
-      - ../client:/usr/app
-      - /usr/app/node_modules
-
-    environment:
-      - MODE=develop
-
-    command: bash -c "npm install && npm run dev"
-  cchat-server-app:
-    build:
-      context: ../server
-      dockerfile: '../dev-config/Dockerfile.server'
-    # Bash в контейнере может не распознавать wait-for-db.sh из-за CRLF
-    # В таком случае можно изменить формат - `dos2unix ../server/wait-for-db.sh`
-    command: ./wait-for-db.sh psql ./cchat-server-app
+      context: ../server/auth-service
+      dockerfile: ./Dockerfile
+    command: ./wait-for-db.sh auth-postgres ./auth-service
     environment:
       - PG_DB_PASSWORD=qwerty
-      - REDIS_DB_PASSWORD=admin12345
     ports:
-      - 8040:8040
+      - 3010:3010
     depends_on:
-      - psql
-      - redis
-  psql:
+      - auth-postgres
+  auth-postgres:
     restart: always
     image: postgres:latest
     environment:
       - POSTGRES_PASSWORD=qwerty
     ports:
-      - 5443:5432
-  redis:
-    image: redis:latest
-    restart: always
-    command: ['redis-server', '--requirepass', 'admin12345']
+      - 3310:5432
+  user-service:
+    build:
+      context: ../server/user-service
+      dockerfile: ./Dockerfile
+    command: ./wait-for-db.sh user-postgres ./user-service
     environment:
-      - REDIS_DB_PASSWORD=admin12345
+      - PG_DB_PASSWORD=qwerty
     ports:
-      - 6399:6379
+      - 3040:3040
+    depends_on:
+      - user-postgres
+  user-postgres:
+    restart: always
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=qwerty
+    ports:
+      - 3340:5432
+  chat-service:
+    build:
+      context: ../server/chat-service
+      dockerfile: ./Dockerfile
+    command: ./wait-for-db.sh chat-postgres ./chat-service
+    environment:
+      - PG_DB_PASSWORD=qwerty
+    ports:
+      - 8040:8040
+    depends_on:
+      - chat-postgres
+  chat-postgres:
+    restart: always
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=qwerty
+    ports:
+      - 3320:5432
+  # redis:
+  #   image: redis:latest
+  #   restart: always
+  #   command: ['redis-server', '--requirepass', 'admin12345']
+  #   environment:
+  #     - REDIS_DB_PASSWORD=admin12345
+  #   ports:
+  #     - 6399:6379

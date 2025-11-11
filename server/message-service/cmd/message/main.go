@@ -18,7 +18,10 @@ import (
 	"github.com/sergey-frey/cchat/message-service/internal/http-server/middleware/cors"
 	"github.com/sergey-frey/cchat/message-service/internal/http-server/middleware/jwtcheck"
 	"github.com/sergey-frey/cchat/message-service/internal/lib/logger/slogpretty"
-	"github.com/sergey-frey/cchat/message-service/internal/storage/postgres"
+	"github.com/sergey-frey/cchat/message-service/internal/provider/storage/postgres"
+
+	messageService "github.com/sergey-frey/cchat/message-service/internal/services/message"
+	messageHandler "github.com/sergey-frey/cchat/message-service/internal/http-server/handlers/message"
 
 	"github.com/swaggo/http-swagger/v2"
 )
@@ -54,22 +57,24 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	storagePath := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", cfg.PostgreStorage.Host, cfg.PostgreStorage.Port, cfg.PostgreStorage.Username, cfg.PostgreStorage.DBName, os.Getenv("PG_DB_PASSWORD"), cfg.PostgreStorage.SSLMode)
+	storagePath := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"), "disable")
 
 	pool, err := postgres.New(context.Background(), storagePath)
 	if err != nil {
 		panic(err)
 	}
-	// messageService := messageService.New(pool, log)
-	// messageHandler := messageHandler.New(messageService, log)
+	messageService := messageService.New(pool, log)
+	messageHandler := messageHandler.New(messageService, log)
 
-	migrator.NewMigration("postgres://postgres:qwerty@psql:5432/postgres?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
+	migrator.NewMigration("postgres://user:password@messages-db:5432/messagesdb?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
 
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8040/swagger/doc.json"), //The url pointing to API definition
 	))
 
 	router.With(jwtcheck.JWTCheck).Route("/message", func(r chi.Router) {
+		r.Post("/{chat_id}/send", messageHandler.SendMessage(context.Background()))
+		r.Get("/{chat_id}/history", messageHandler.ChatHistory(context.Background()))
 	})
 
 	log.Info("starting server")

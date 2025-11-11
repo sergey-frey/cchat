@@ -73,7 +73,7 @@ func main() {
 	
 	router.With(jwtcheck.JWTCheck).Route("/chats", func(r chi.Router) {
 		r.Post("/new", chatHandler.NewChat(context.Background()))
-		r.Get("/list-chats", chatHandler.ListChats(context.Background()))
+		r.Get("/list", chatHandler.ListChats(context.Background()))
 	})
 
 	log.Info("starting server")

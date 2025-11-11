@@ -6,8 +6,9 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+COPY ./wait-for-db.sh ./
 
-RUN CGOENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/message-service ./cmd/message/main.go
+RUN CGOENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/messages-service ./cmd/message/main.go
 
 RUN chmod +x ./wait-for-db.sh
 
@@ -15,15 +16,19 @@ FROM alpine:latest
 
 WORKDIR /app
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /app/message-service .
-COPY --from=builder /src/config /config
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt ./etc/ssl/certs/
+COPY --from=builder /app/messages-service .
+COPY --from=builder /src/config ./config
 COPY --from=builder /src/wait-for-db.sh .
+COPY --from=builder /src/.env .
+COPY --from=builder /src/schema ./schema
+
+RUN chmod +x ./wait-for-db.sh
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 USER appuser
 
-EXPOSE 3030
+EXPOSE 8080
 
-CMD ["./message-service"]
+CMD ["./messages-service"]

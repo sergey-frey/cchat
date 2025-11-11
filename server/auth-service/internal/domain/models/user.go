@@ -32,6 +32,10 @@ type NewPassword struct {
 	NewPassword      string `json:"new_password" validate:"required,gte=8" example:"123456789"`
 }
 
+type ResetPassword struct {
+	Email string `json:"email" validate:"required,email" example:"example@mail.com"`
+}
+
 type NormalizedUser struct {
 	UUID     uuid.UUID `json:"uuid"`
 	Username string    `json:"username"`

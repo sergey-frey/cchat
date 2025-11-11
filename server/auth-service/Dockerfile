@@ -29,6 +29,6 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 USER appuser
 
-EXPOSE 3010
+EXPOSE 8080
 
 CMD ["./auth-service"]

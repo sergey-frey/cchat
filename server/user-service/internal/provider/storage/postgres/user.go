@@ -2,8 +2,11 @@ package postgres
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
@@ -11,6 +14,11 @@ import (
 	"github.com/sergey-frey/cchat/user-service/internal/domain/models"
 	"github.com/sergey-frey/cchat/user-service/internal/provider/storage"
 )
+
+type pageCursor struct {
+	CreatedAt time.Time `json:"c"`
+	UUID        string `json:"u"`
+}
 
 func (s *Storage) CreateUser(ctx context.Context, uid uuid.UUID, email string, username string, name string) (*models.NormalizedUser, error) {
 	const op = "storage.postgres.user.MyProfile"
@@ -91,7 +99,7 @@ func (s *Storage) GetUserByID(ctx context.Context, username string) (*models.Use
 	return &info, nil
 }
 
-func (s *Storage) GetUserByEmail(ctx context.Context, username string) (*models.UserInfo, error) {
+func (s *Storage) GetUserByEmail(ctx context.Context, email string) (*models.NormalizedUser, error) {
 	const op = "storage.postgres.user.Profile"
 
 	tx, err := s.pool.Begin(ctx)
@@ -111,15 +119,15 @@ func (s *Storage) GetUserByEmail(ctx context.Context, username string) (*models.
 		}
 	}()
 
-	var info models.UserInfo
+	var info models.NormalizedUser
 
 	row := tx.QueryRow(ctx, `
-		SELECT id, email, username, name
+		SELECT user_id, email, username
 		FROM users
-		WHERE username = $1;
-	`, username)
+		WHERE email = $1;
+	`, email)
 
-	err = row.Scan(&info.UUID, &info.Email, &info.Username, &info.Name)
+	err = row.Scan(&info.UUID, &info.Email, &info.Username)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
@@ -130,7 +138,7 @@ func (s *Storage) GetUserByEmail(ctx context.Context, username string) (*models.
 	return &info, nil
 }
 
-func (s *Storage) Profiles(ctx context.Context, username string, cursor int64, limit int) ([]models.UserInfo, *models.Cursor, error) {
+func (s *Storage) Profiles(ctx context.Context, username string, cursor string, limit int) ([]models.UserInfo, *models.Cursor, error) {
 	const op = "storage.postgres.user.ListProfiles"
 
 	tx, err := s.pool.Begin(ctx)
@@ -150,81 +158,110 @@ func (s *Storage) Profiles(ctx context.Context, username string, cursor int64, l
 		}
 	}()
 
-	values := make([]interface{}, 0, 4)
-	pagination, limitQ := "", ""
-	username += "%"
+	// Запрашиваем на один элемент больше, чтобы проверить наличие следующей страницы.
+	fetchLimit := limit + 1
 
-	if cursor == 0 {
-		pagination += fmt.Sprintf("WHERE username LIKE $%d ORDER BY id ASC", len(values)+1)
-		limitQ += fmt.Sprintf("$%d", len(values)+2)
-		values = append(values, username, limit+1)
+	var query string
+	args := make([]interface{}, 0, 4)
+
+	// Ищем по частичному совпадению имени пользователя.
+	// ILIKE - регистронезависимый поиск в PostgreSQL.
+	usernamePattern := username + "%"
+
+	// Внутренняя структура для сканирования данных из БД, включая created_at.
+	type userWithTimestamp struct {
+		models.UserInfo
+		CreatedAt time.Time
 	}
 
-	if cursor != 0 {
-		pagination += fmt.Sprintf("WHERE id < $%d AND username LIKE $%d ORDER BY id ASC", len(values)+1, len(values)+2)
-		limitQ += fmt.Sprintf("$%d", len(values)+3)
-		values = append(values, cursor, username, limit+1)
-	}
-
-	stmt := fmt.Sprintf(`
-		WITH u AS (
-			SELECT * FROM users u %s
-		)
-		SELECT id, email, username, name
-		FROM u
-		ORDER BY id DESC
-		LIMIT %s;
-	`, pagination, limitQ)
-
-	rows, err := s.pool.Query(ctx, stmt, values...)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil, fmt.Errorf("%s: %w", op, storage.ErrUsersNotFound)
+	if cursor == "" {
+		// Первый запрос: курсора нет, начинаем с самого начала.
+		// Сортируем по убыванию времени создания, затем по UUID для стабильного порядка.
+		query = `
+			SELECT id, email, username, name, created_at
+			FROM users
+			WHERE username ILIKE $1
+			ORDER BY created_at DESC, id DESC
+			LIMIT $2
+		`
+		args = append(args, usernamePattern, fetchLimit)
+	} else {
+		// Последующие запросы: используем курсор.
+		decodedCursor, err := base64.StdEncoding.DecodeString(cursor)
+		if err != nil {
+			return nil, nil, fmt.Errorf("%s: invalid cursor format: %w", op, err)
 		}
+
+		var c pageCursor
+		if err := json.Unmarshal(decodedCursor, &c); err != nil {
+			return nil, nil, fmt.Errorf("%s: invalid cursor data: %w", op, err)
+		}
+
+		// Ищем записи, которые "старше" (созданы раньше), чем запись в курсоре.
+		// Конструкция (created_at, id) < ($2, $3) эффективно использует индекс.
+		query = `
+			SELECT id, email, username, name, created_at
+			FROM users
+			WHERE username ILIKE $1 AND (created_at, id) < ($2, $3)
+			ORDER BY created_at DESC, id DESC
+			LIMIT $4
+		`
+		args = append(args, usernamePattern, c.CreatedAt, c.UUID, fetchLimit)
+	}
+
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
+		// pgx.ErrNoRows не возвращается для Query, поэтому эта проверка не нужна.
+		// Пустой результат - это не ошибка.
 		return nil, nil, fmt.Errorf("%s: %w", op, err)
 	}
-
 	defer rows.Close()
 
-	var profiles []models.UserInfo
+	profiles := make([]userWithTimestamp, 0, fetchLimit)
 	for rows.Next() {
-		var item models.UserInfo
-		err = rows.Scan(&item.UUID, &item.Email, &item.Username, &item.Name)
+		var item userWithTimestamp
+		// Сканируем id в поле UUID структуры UserInfo
+		err := rows.Scan(&item.UUID, &item.Email, &item.Username, &item.Name, &item.CreatedAt)
 		if err != nil {
 			return nil, nil, fmt.Errorf("%s: %w", op, err)
 		}
 		profiles = append(profiles, item)
 	}
 
-	rcursor := &models.Cursor{}
-
 	if len(profiles) == 0 {
-		return nil, nil, fmt.Errorf("%s: %w", op, storage.ErrUsersNotFound)
+		return []models.UserInfo{}, &models.Cursor{HasNextPage: false}, nil
 	}
 
-	if len(profiles) < 2 {
-		rcursor = &models.Cursor{
-			PrevCursor: profiles[len(profiles)-1].UUID,
-		}
-		return profiles, rcursor, nil
+	hasNextPage := len(profiles) > limit
+	if hasNextPage {
+		// Убираем лишний элемент, который мы запрашивали для проверки.
+		profiles = profiles[:limit]
 	}
 
-	if len(profiles) >= 2 {
-		if len(profiles) <= limit {
-			rcursor = &models.Cursor{
-				PrevCursor: profiles[len(profiles)-1].UUID,
-			}
-			return profiles, rcursor, nil
-		}
-		if len(profiles) > limit {
-			rcursor = &models.Cursor{
-				PrevCursor: profiles[len(profiles)-2].UUID,
-				NextCursor: profiles[len(profiles)-1].UUID,
-			}
-		}
+	// Создаем курсор для следующей страницы из последнего элемента в текущем списке.
+	lastItem := profiles[len(profiles)-1]
+	nextCursorData, err := json.Marshal(pageCursor{
+		CreatedAt: lastItem.CreatedAt,
+		UUID:      lastItem.UUID.String(),
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("%s: failed to create next cursor: %w", op, err)
+	}
+	
+	nextCursor := base64.StdEncoding.EncodeToString(nextCursorData)
+
+	// Преобразуем результат в целевой тип, убирая временную метку.
+	resultProfiles := make([]models.UserInfo, len(profiles))
+	for i, p := range profiles {
+		resultProfiles[i] = p.UserInfo
+	}
+	
+	rcursor := &models.Cursor{
+		NextCursor:  nextCursor,
+		HasNextPage: hasNextPage,
 	}
 
-	return profiles[:len(profiles)-1], rcursor, nil
+	return resultProfiles, rcursor, nil
 }
 
 func (s *Storage) ChangeUsername(ctx context.Context, oldUsername string, newUsername string) (*models.UserInfo, error) {

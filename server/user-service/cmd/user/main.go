@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
-	_ "net/http/pprof"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -15,12 +15,13 @@ import (
 	_ "github.com/sergey-frey/cchat/user-service/docs"
 	"github.com/sergey-frey/cchat/user-service/internal/app"
 	"github.com/sergey-frey/cchat/user-service/internal/config"
+	"github.com/sergey-frey/cchat/user-service/internal/http-server/handlers/system"
 	userHandler "github.com/sergey-frey/cchat/user-service/internal/http-server/handlers/user"
 	"github.com/sergey-frey/cchat/user-service/internal/http-server/middleware/cors"
 	"github.com/sergey-frey/cchat/user-service/internal/http-server/middleware/jwtcheck"
 	"github.com/sergey-frey/cchat/user-service/internal/lib/logger/slogpretty"
-	userService "github.com/sergey-frey/cchat/user-service/internal/services/user"
 	"github.com/sergey-frey/cchat/user-service/internal/provider/storage/postgres"
+	userService "github.com/sergey-frey/cchat/user-service/internal/services/user"
 	"github.com/swaggo/http-swagger/v2"
 )
 
@@ -55,7 +56,7 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	storagePath := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", cfg.PostgreStorage.Host, cfg.PostgreStorage.Port, cfg.PostgreStorage.Username, cfg.PostgreStorage.DBName, os.Getenv("PG_DB_PASSWORD"), cfg.PostgreStorage.SSLMode)
+	storagePath := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"), "disable")
 
 	pool, err := postgres.New(context.Background(), storagePath)
 	if err != nil {
@@ -65,7 +66,7 @@ func main() {
 	userService := userService.New(pool, log)
 	userHandler := userHandler.New(userService, log)
 
-	migrator.NewMigration("postgres://postgres:qwerty@user-postgres:5432/postgres?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
+	migrator.NewMigration("postgres://user:password@users-db:5432/usersdb?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
 
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8040/swagger/doc.json"), //The url pointing to API definition
@@ -74,13 +75,15 @@ func main() {
 	router.Route("/users", func(r chi.Router) {
 		r.Post("/", userHandler.CreateUser(context.Background()))
 		r.Get("/{uuid}", userHandler.GetUserByID(context.Background()))
-		r.Get("/{email}", userHandler.GetUserByEmail(context.Background()))
+		r.Get("/", userHandler.GetUserByEmail(context.Background()))
 	})
 
 	router.With(jwtcheck.JWTCheck).Route("/profiles", func(r chi.Router) {
 		r.Get("/", userHandler.Profiles(context.Background()))
-		r.Patch("/{id}", userHandler.UpdateInfo(context.Background()))
+		// r.Patch("/{id}", userHandler.UpdateInfo(context.Background()))
 	})
+
+	router.Get("/system-id", system.GetSystemID(context.Background(), log))
 
 	log.Info("starting server")
 

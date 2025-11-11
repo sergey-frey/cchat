@@ -17,8 +17,8 @@ import (
 type UserService interface {
 	CreateUser(ctx context.Context, uid uuid.UUID, email string, username string, name string) (info *models.NormalizedUser, err error)
 	GetUserByID(ctx context.Context, username string) (info *models.UserInfo, err error)
-	GetUserByEmail(ctx context.Context, username string) (info *models.UserInfo, err error)
-	Profiles(ctx context.Context, username string, cursor int64, limit int) (profiles []models.UserInfo, cursors *models.Cursor, err error)
+	GetUserByEmail(ctx context.Context, email string) (info *models.NormalizedUser, err error)
+	Profiles(ctx context.Context, username string, cursor string, limit int) (profiles []models.UserInfo, cursors *models.Cursor, err error)
 	ChangeUsername(ctx context.Context, oldUsername string, newUsername string) (info *models.UserInfo, err error)
 	ChangeEmail(ctx context.Context, username string, newEmail string) (info *models.UserInfo, err error)
 	ChangeName(ctx context.Context, username string, newName string) (info *models.UserInfo, err error)
@@ -98,17 +98,17 @@ func (u *UserDataService) GetUserByID(ctx context.Context, username string) (*mo
 	return info, nil
 }
 
-func (u *UserDataService) GetUserByEmail(ctx context.Context, username string) (*models.UserInfo, error) {
-	const op = "services.user.Profile"
+func (u *UserDataService) GetUserByEmail(ctx context.Context, email string) (*models.NormalizedUser, error) {
+	const op = "services.user.GetUserByEmail"
 
 	log := u.log.With(
 		slog.String("op", op),
-		slog.String("username", username),
+		slog.String("email", email),
 	)
 
 	log.Info("getting profile information")
 
-	info, err := u.userService.GetUserByEmail(ctx, username)
+	info, err := u.userService.GetUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			log.Error("user not found", sl.Err(err))
@@ -126,7 +126,7 @@ func (u *UserDataService) GetUserByEmail(ctx context.Context, username string) (
 	return info, nil
 }
 
-func (u *UserDataService) Profiles(ctx context.Context, username string, cursor int64, limit int) ([]models.UserInfo, *models.Cursor, error) {
+func (u *UserDataService) Profiles(ctx context.Context, username string, cursor string, limit int) ([]models.UserInfo, *models.Cursor, error) {
 	const op = "services.user.ListProfiles"
 
 	log := u.log.With(

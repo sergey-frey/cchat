@@ -18,7 +18,8 @@ import (
 type Auth interface {
 	Login(ctx context.Context, loginUser models.LoginUser) (user *models.NormalizedUser, accessToken string, refreshToken string, err error)
 	RegisterNewUser(ctx context.Context, registerUSer models.RegisterUser) (user *models.NormalizedUser, accessToken string, refreshToken string, err error)
-	ChangePassword(ctx context.Context, newPassword models.NewPassword) (user *models.NormalizedUser, accessToken string, refreshToken string, err error)
+	ChangePassword(ctx context.Context, newPassword models.NewPassword) (err error)
+	ResetPassword(ctx context.Context, resetPassword models.ResetPassword) (err error)
 }
 
 type AuthHandler struct {
@@ -167,7 +168,7 @@ func (a *AuthHandler) ChangePassword(ctx context.Context) http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		var req models.RegisterUser
+		var req models.NewPassword
 
 		err := render.Decode(r, &req)
 
@@ -175,15 +176,15 @@ func (a *AuthHandler) ChangePassword(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		user, accessToken, refreshToken, err := a.auth.RegisterNewUser(ctx, req)
+		err = a.auth.ChangePassword(ctx, req)
 		if err != nil {
-			if errors.Is(err, auth.ErrUserExists) {
+			if errors.Is(err, auth.ErrInvalidCredentials) {
 
 				render.Status(r, http.StatusConflict)
 
 				render.JSON(w, r, resp.ErrorResponse{
-					Status: http.StatusConflict,
-					Error:  "user already exists",
+					Status: http.StatusBadRequest,
+					Error:  "invalid email or password",
 				})
 
 				return
@@ -198,11 +199,9 @@ func (a *AuthHandler) ChangePassword(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		cookie.SetCookie(w, accessToken, refreshToken)
-
 		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
-			Data:   user,
+			Data:   "password changed successfully",
 		})
 	}
 }

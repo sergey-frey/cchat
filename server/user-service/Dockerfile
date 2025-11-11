@@ -8,7 +8,7 @@ RUN go mod download
 COPY . .
 COPY ./wait-for-db.sh ./
 
-RUN CGOENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/user-service ./cmd/user/main.go
+RUN CGOENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/users-service ./cmd/user/main.go
 
 RUN chmod +x ./wait-for-db.sh
 
@@ -17,7 +17,7 @@ FROM alpine:latest
 WORKDIR /app
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt ./etc/ssl/certs/
-COPY --from=builder /app/user-service .
+COPY --from=builder /app/users-service .
 COPY --from=builder /src/config ./config
 COPY --from=builder /src/wait-for-db.sh .
 COPY --from=builder /src/.env .
@@ -29,6 +29,6 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 USER appuser
 
-EXPOSE 3040
+EXPOSE 8080
 
-CMD ["./user-service"]
+CMD ["./users-service"]

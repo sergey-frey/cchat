@@ -58,7 +58,7 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	storagePath := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", cfg.PostgreStorage.Host, cfg.PostgreStorage.Port, cfg.PostgreStorage.Username, cfg.PostgreStorage.DBName, os.Getenv("PG_DB_PASSWORD"), cfg.PostgreStorage.SSLMode)
+	storagePath := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"), "disable")
 
 	pool, err := postgres.New(context.Background(), storagePath)
 	if err != nil {
@@ -68,12 +68,12 @@ func main() {
 	apiHttpClient := &http.Client{
 		Timeout: 5 * time.Second,
 	}
-	userApiClient := userapi.NewClient(apiHttpClient, "http://0.0.0.0:3040")
+	userApiClient := userapi.NewClient(apiHttpClient, os.Getenv("USERS_SERVICE_1_URL"), log)
 
 	authService := authService.New(pool, userApiClient, log)
 	authHandler := authHandler.New(authService, log)
 
-	migrator.NewMigration("postgres://postgres:qwerty@auth-postgres:5432/postgres?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
+	migrator.NewMigration("postgres://user:password@auth-db:5432/authdb?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
 
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8040/swagger/doc.json"), //The url pointing to API definition
@@ -84,7 +84,7 @@ func main() {
 		r.Post("/register", authHandler.Register(context.Background()))
 		r.Post("/session", session.CheckSession(context.Background(), log))
 		r.Post("/logout", session.FinishSession(context.Background(), log))
-		r.Post("/password/change", authHandler.ChangePassword(context.Background()))
+		r.Patch("/password/change", authHandler.ChangePassword(context.Background()))
 		r.Post("/password/reset", authHandler.ResetPassword(context.Background()))
 	})
 

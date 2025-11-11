@@ -13,12 +13,7 @@ type Config struct {
 	Env            string     `yaml:"env" env-default:"local"`
 	ClientDomen    string     `yaml:"client_domen"`
 	Server         HTTPServer `yaml:"http_server"`
-	PostgreStorage PostgresDB `yaml:"psql"`
-	RedisStorage   RedisDB    `yaml:"redis"`
-	// TokenTTL time.Duration `yaml:"token_ttl" env-required:"true"`
-	//Clients ClientConfig `yaml:"clients"`
-	//AppSecret string `yaml:"app_secret"`
-
+	// PostgreStorage PostgresDB `yaml:"psql"`
 }
 
 type HTTPServer struct {
@@ -34,15 +29,6 @@ type PostgresDB struct {
 	Password string
 	DBName   string `yaml:"dbname"`
 	SSLMode  string `yaml:"sslmode"`
-}
-
-type RedisDB struct {
-	Address     string        `yaml:"address"`
-	User        string        `yaml:"user"`
-	DB          int           `yaml:"db"`
-	MaxRetries  int           `yaml:"max_retries"`
-	DialTimeout time.Duration `yaml:"dial_timeout"`
-	Timeout     time.Duration `yaml:"timeout"`
 }
 
 func MustLoad() *Config {

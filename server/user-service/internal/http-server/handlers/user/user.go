@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi"
+	// "github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"github.com/sergey-frey/cchat/user-service/internal/domain/models"
@@ -21,8 +21,8 @@ import (
 type User interface {
 	CreateUser(ctx context.Context, email string) (info *models.NormalizedUser, err error)
 	GetUserByID(ctx context.Context, uuid string) (info *models.UserInfo, err error)
-	GetUserByEmail(ctx context.Context, email string) (info *models.UserInfo, err error)
-	Profiles(ctx context.Context, username string, cursor int64, limit int) (profiles []models.UserInfo, cursors *models.Cursor, err error)
+	GetUserByEmail(ctx context.Context, email string) (info *models.NormalizedUser, err error)
+	Profiles(ctx context.Context, username string, cursor string, limit int) (profiles []models.UserInfo, cursors *models.Cursor, err error)
 	UpdateInfo(ctx context.Context, username string, newInfo models.NewUserInfo) (info *models.UserInfo, accessToken string, refreshToken string, err error)
 }
 
@@ -157,9 +157,24 @@ func (u *UserHandler) GetUserByEmail(ctx context.Context) http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		username := chi.URLParam(r, "username")
-		if username == "" {
-			log.Warn("username is empty")
+		// email := chi.URLParam(r, "email")
+		// if email == "" {
+		// 	log.Warn("username is empty")
+
+		// 	render.Status(r, http.StatusConflict)
+
+		// 	render.JSON(w, r, resp.ErrorResponse{
+		// 		Status: http.StatusConflict,
+		// 		Error:  "invalid request",
+		// 	})
+
+		// 	return
+		// }
+
+		email := r.URL.Query().Get("email")
+
+		if email == "" {
+			log.Warn("email is empty")
 
 			render.Status(r, http.StatusConflict)
 
@@ -171,16 +186,16 @@ func (u *UserHandler) GetUserByEmail(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		userInfo, err := u.userHandler.GetUserByEmail(ctx, username)
+		userInfo, err := u.userHandler.GetUserByEmail(ctx, email)
 		if err != nil {
 			if errors.Is(err, user.ErrUserNotFound) {
-				log.Warn("user not found", "user", username)
+				log.Warn("email not found", "email:", email)
 
 				render.Status(r, http.StatusNotFound)
 
 				render.JSON(w, r, resp.ErrorResponse{
 					Status: http.StatusNotFound,
-					Error:  "user not found",
+					Error:  "email not found",
 				})
 
 				return
@@ -266,25 +281,12 @@ func (u *UserHandler) Profiles(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		var cursor int64
+		var cursor string
 		var err error
 
 		if stringCursor == "" {
-			cursor = 0
+			cursor = ""
 		} else {
-			cursor, err = strconv.ParseInt(stringCursor, 10, 64)
-			if err != nil {
-				log.Error("failed to convert cursor")
-
-				render.Status(r, http.StatusInternalServerError)
-
-				render.JSON(w, r, resp.ErrorResponse{
-					Status: http.StatusInternalServerError,
-					Error:  "failed to convert curosr",
-				})
-
-				return
-			}
 		}
 
 		limit, err := strconv.Atoi(stringPageSize)

@@ -59,6 +59,8 @@ func CheckSession(ctx context.Context, log *slog.Logger) http.HandlerFunc {
 			return
 		}
 
+		log.Info("successful session verification")
+
 		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
 			Data:   user,

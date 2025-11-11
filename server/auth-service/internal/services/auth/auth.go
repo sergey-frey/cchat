@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/google/uuid"
 	"github.com/sergey-frey/cchat/server/auth-service/internal/domain/models"
 	"github.com/sergey-frey/cchat/server/auth-service/internal/lib/jwt"
@@ -19,11 +20,10 @@ type AuthProvider interface {
 	Login(ctx context.Context, uuid uuid.UUID) ([]byte, error)
 	Password(ctx context.Context, uuid uuid.UUID) ([]byte, error)
 	ChangePassword(ctx context.Context, uid uuid.UUID, newPasswordHash []byte) error
-	RefreshPassword(ctx context.Context) error
 }
 
 type UserProvider interface {
-	GetUser(ctx context.Context, userID string) (*models.NormalizedUser, error)
+	GetUser(ctx context.Context, email string) (*models.NormalizedUser, error)
 	CreateUser(ctx context.Context, email string) (*models.NormalizedUser, error)
 }
 
@@ -51,7 +51,7 @@ func New(auth AuthProvider, user UserProvider, log *slog.Logger) *AuthService {
 
 //go:generate go run github.com/vektra/mockery/v2@v2.53 --name=Auth
 func (a *AuthService) Login(ctx context.Context, loginUser models.LoginUser) (*models.NormalizedUser, string, string, error) {
-	const op = "auth.Login"
+	const op = "services.auth.Login"
 
 	log := a.log.With(
 		slog.String("op", op),
@@ -104,7 +104,7 @@ func (a *AuthService) Login(ctx context.Context, loginUser models.LoginUser) (*m
 }
 
 func (a *AuthService) RegisterNewUser(ctx context.Context, registerUser models.RegisterUser) (*models.NormalizedUser, string, string, error) {
-	const op = "auth.RegisterNewUser"
+	const op = "services.auth.RegisterNewUser"
 
 	log := a.log.With(
 		slog.String("op", op),
@@ -152,47 +152,47 @@ func (a *AuthService) RegisterNewUser(ctx context.Context, registerUser models.R
 	return user, accessToken, refreshToken, nil
 }
 
-func (a *AuthService) ChangePassword(ctx context.Context, newPassword models.NewPassword) (*models.NormalizedUser, string, string, error) {
-	const op = "auth.ChangePassword"
+func (a *AuthService) ChangePassword(ctx context.Context, newPassword models.NewPassword) (error) {
+	const op = "services.auth.ChangePassword"
 
 	log := a.log.With(
 		slog.String("op", op),
 		slog.String("email", newPassword.Email),
 	)
 
-	log.Info("registering user")
+	log.Info("changing user password")
 
 	user, err := a.user.GetUser(ctx, newPassword.Email)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			log.Warn("user not found", sl.Err(err))
 
-			return nil, "", "", fmt.Errorf("%s: %w", op, ErrUserNotFound)
+			return fmt.Errorf("%s: %w", op, ErrUserNotFound)
 		}
 
 		log.Error("failed to get user", sl.Err(err))
 
-		return nil, "", "", fmt.Errorf("%s: %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 	
 	oldPasswordHash, err := a.auth.Password(ctx, user.UUID)
 	if err != nil {
 		log.Error("failed to get old password", sl.Err(err))
 		
-		return nil, "", "", fmt.Errorf("%s: %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	if err = bcrypt.CompareHashAndPassword(oldPasswordHash, []byte(newPassword.PreviousPassword)); err != nil {
 		log.Error("failed to compare passwords", sl.Err(ErrInvalidCredentials))
 		
-		return nil, "", "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+		return fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 	}
 
 	passHash, err := bcrypt.GenerateFromPassword([]byte(newPassword.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		log.Error("failed to generate password hash", sl.Err(err))
 
-		return nil, "", "", fmt.Errorf("%s: %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	err = a.auth.ChangePassword(ctx, user.UUID, passHash)
@@ -200,23 +200,67 @@ func (a *AuthService) ChangePassword(ctx context.Context, newPassword models.New
 		if errors.Is(err, storage.ErrUserExists) {
 			log.Warn("user already exists", sl.Err(err))
 
-			return nil, "", "", fmt.Errorf("%s: %w", op, ErrUserExists)
+			return fmt.Errorf("%s: %w", op, ErrUserExists)
 		}
 
 		log.Error("failed to save user", sl.Err(err))
 
-		return nil, "", "", fmt.Errorf("%s: %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	log.Info("user registered")
+	log.Info("password changed successfully")
 
-	accessToken, refreshToken, err := jwt.NewPairTokens(*user)
+	return nil
+}
+
+func (a *AuthService) ResetPassword(ctx context.Context, resetPassword models.ResetPassword) (error) {
+	const op = "services.auth.ResetPassword"
+
+	log := a.log.With(
+		slog.String("op", op),
+		slog.String("email", resetPassword.Email),
+	)
+
+	log.Info("changing user password")
+
+	user, err := a.user.GetUser(ctx, resetPassword.Email)
 	if err != nil {
-		log.Error("failed to generate tokens", sl.Err(err))
+		if errors.Is(err, storage.ErrUserNotFound) {
+			log.Warn("user not found", sl.Err(err))
 
-		return nil, "", "", fmt.Errorf("%s: %w", op, err)
+			return fmt.Errorf("%s: %w", op, ErrUserNotFound)
+		}
+
+		log.Error("failed to get user", sl.Err(err))
+
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	
+
+	key := gofakeit.Password(true, true, true, true, false, 14)
+
+	passHash, err := bcrypt.GenerateFromPassword([]byte(key), bcrypt.DefaultCost)
+	if err != nil {
+		log.Error("failed to generate password hash", sl.Err(err))
+
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	return user, accessToken, refreshToken, nil
+	err = a.auth.ChangePassword(ctx, user.UUID, passHash)
+	if err != nil {
+		if errors.Is(err, storage.ErrUserExists) {
+			log.Warn("user already exists", sl.Err(err))
+
+			return fmt.Errorf("%s: %w", op, ErrUserExists)
+		}
+
+		log.Error("failed to save user", sl.Err(err))
+
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("password changed successfully")
+
+	return nil
 }
 

@@ -66,7 +66,7 @@ func (s *Storage) Login(ctx context.Context, uid uuid.UUID) ([]byte, error) {
 	var password []byte
 
 	row := tx.QueryRow(ctx, `
-		SELECT pass_hash
+		SELECT password_hash
 		FROM credentials
 		WHERE user_id = $1;
 	`, uid)
@@ -100,8 +100,8 @@ func (s *Storage) Password(ctx context.Context, uid uuid.UUID) (password []byte,
 	}()
 
 	row := tx.QueryRow(ctx, `
-		SELECT pass_hash
-		FROM users
+		SELECT password_hash
+		FROM credentials
 		WHERE user_id = $1;
 	`, uid)
 
@@ -136,8 +136,8 @@ func (s *Storage) ChangePassword(ctx context.Context, uid uuid.UUID, newPassword
 	var ruid uuid.UUID
 
 	row := tx.QueryRow(ctx, `
-		UPDATE users
-		SET pass_hash = $1
+		UPDATE credentials
+		SET password_hash = $1
 		WHERE user_id = $2
 		RETURNING user_id;
 	`, newPasswordHash, uid)
@@ -150,8 +150,39 @@ func (s *Storage) ChangePassword(ctx context.Context, uid uuid.UUID, newPassword
 	return nil
 }
 
-func (s *Storage) RefreshPassword(ctx context.Context) error {
-	// TODO: implement
+func (s *Storage) ResetPassword(ctx context.Context, uid uuid.UUID, newPasswordHash []byte) error {
+	const op = "storage.postgres.user.ResetPassword"
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+			return
+		}
+
+		commitErr := tx.Commit(ctx)
+		if commitErr != nil {
+			err = fmt.Errorf("%s: %w", op, commitErr)
+		}
+	}()
+
+	var ruid uuid.UUID
+
+	row := tx.QueryRow(ctx, `
+		UPDATE users
+		SET password_hash = $1
+		WHERE user_id = $2
+		RETURNING user_id;
+	`, newPasswordHash, uid)
+
+	err = row.Scan(&ruid)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
 
 	return nil
 }

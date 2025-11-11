@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"net/url"
 
 	"github.com/sergey-frey/cchat/server/auth-service/internal/domain/models"
 )
@@ -15,7 +17,7 @@ var (
 	ErrUserNotFound = fmt.Errorf("user not found")
 )
 
-type CreateUserResponse struct {
+type NormalizedUserResponse struct {
 	Status int                `json:"status"`
 	Data   models.NormalizedUser `json:"data"`
 }
@@ -27,33 +29,46 @@ type EmailOfUser struct {
 type Client struct {
 	httpClient *http.Client
 	baseURL    string
+	log *slog.Logger
 }
 
-func NewClient(httpClient *http.Client, baseURL string) *Client {
+func NewClient(httpClient *http.Client, baseURL string, log *slog.Logger) *Client {
 	return &Client{
 		httpClient: httpClient,
 		baseURL:    baseURL,
+		log: log,
 	}
 }
 
 func (c *Client) GetUser(ctx context.Context, email string) (*models.NormalizedUser, error) {
 	const op = "api.userapi.client.GetUser"
 
-	endpoint := fmt.Sprintf("/users/%s", email)
+	log := c.log.With(
+		slog.String("op", op),
+		slog.String("email", email),
+	)
+
+	param := url.Values{}
+
+	param.Add("email", email)
+
+	log.Info("email:")
+
+	endpoint := fmt.Sprintf("http://users-service-1:8080/users/?%s", param.Encode())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	// req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	if resp.StatusCode != http.StatusCreated {
+	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusNotFound {
 			return nil, fmt.Errorf("%s: %w", op, ErrUserNotFound)
 		}
@@ -63,12 +78,12 @@ func (c *Client) GetUser(ctx context.Context, email string) (*models.NormalizedU
 
 	defer resp.Body.Close()
 
-	var newUser models.NormalizedUser
-	if err := json.NewDecoder(resp.Body).Decode(&newUser); err != nil {
+	var user NormalizedUserResponse
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return &newUser, nil
+	return &user.Data, nil
 }
 
 func (c *Client) CreateUser(ctx context.Context, email string) (*models.NormalizedUser, error) {
@@ -83,7 +98,7 @@ func (c *Client) CreateUser(ctx context.Context, email string) (*models.Normaliz
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	endpoint := fmt.Sprintf("http://user-service:3040/users/")
+	endpoint := fmt.Sprintf("http://users-service-1:8080/users/")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewBuffer(requestBody))
 	if err != nil {
@@ -107,7 +122,7 @@ func (c *Client) CreateUser(ctx context.Context, email string) (*models.Normaliz
 
 	defer resp.Body.Close()
 
-	var newUser CreateUserResponse
+	var newUser NormalizedUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&newUser); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}

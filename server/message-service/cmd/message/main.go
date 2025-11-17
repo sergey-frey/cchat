@@ -75,6 +75,7 @@ func main() {
 	router.With(jwtcheck.JWTCheck).Route("/message", func(r chi.Router) {
 		r.Post("/{chat_id}/send", messageHandler.SendMessage(context.Background()))
 		r.Get("/{chat_id}/history", messageHandler.ChatHistory(context.Background()))
+		r.Get("/internal/last-messages/batch", messageHandler.LastMessagesBatch(context.Background()))
 	})
 
 	log.Info("starting server")

@@ -1,11 +1,14 @@
 package models
 
+import "github.com/google/uuid"
+
 type NewChat struct {
-	Users []int64 `json:"users"`
+	ChatName string `json:"chat_name"`
+	Users []uuid.UUID `json:"users"`
 }
 
 type Chat struct {
-	ID          int64 `json:"id"`
+	UUID          uuid.UUID `json:"id"`
 	Users       []UserInfo
 	LastMessage *Message `json:"last_message"`
 }

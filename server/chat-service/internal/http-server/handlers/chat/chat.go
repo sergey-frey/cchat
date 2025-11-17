@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
+	"github.com/google/uuid"
 	"github.com/sergey-frey/cchat/server/chat-service/internal/domain/models"
 	"github.com/sergey-frey/cchat/server/chat-service/internal/http-server/handlers"
 	resp "github.com/sergey-frey/cchat/server/chat-service/internal/lib/api/response"
@@ -18,8 +19,8 @@ import (
 )
 
 type Chat interface {
-	NewChat(ctx context.Context, users []int64) (chatID int64, err error)
-	ListChats(ctx context.Context, currUser int64, username string, cursor int64, limit int) (chats []models.Chat, cursors *models.Cursor, err error)
+	NewChat(ctx context.Context, chatName string, users []uuid.UUID) (chatID uuid.UUID, err error)
+	ListChats(ctx context.Context, idUser uuid.UUID, cursor int64, limit int) (chats []models.Chat, cursors *models.Cursor, err error)
 }
 
 type ChatHandler struct {
@@ -79,7 +80,7 @@ func (ch *ChatHandler) NewChat(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		chatID, err := ch.chatHandler.NewChat(ctx, req.Users)
+		chatID, err := ch.chatHandler.NewChat(ctx, req.ChatName, req.Users)
 		if err != nil {
 			log.Error("failed to create new chat", sl.Err(err))
 
@@ -91,7 +92,7 @@ func (ch *ChatHandler) NewChat(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		log.Info("new chat created", slog.Int64("chat_id", chatID))
+		log.Info("new chat created", slog.String("chat_id", chatID.String()))
 
 		render.JSON(w, r, resp.SuccessResponse{
 			Status: http.StatusOK,
@@ -194,7 +195,7 @@ func (ch *ChatHandler) ListChats(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		chats, cursors, err := ch.chatHandler.ListChats(ctx, userInfo.ID, username, cursor, limit)
+		chats, cursors, err := ch.chatHandler.ListChats(ctx, userInfo.UUID, cursor, limit)
 		if err != nil {
 			if errors.Is(err, chat.ErrChatsNotFound) {
 				log.Warn("chats not found")
@@ -226,29 +227,5 @@ func (ch *ChatHandler) ListChats(ctx context.Context) http.HandlerFunc {
 				RCursor: *cursors,
 			},
 		})
-	}
-}
-
-func (cs *ChatHandler) AddOnline() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-	}
-}
-
-func (cs *ChatHandler) SetOnline() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-	}
-}
-
-func (cs *ChatHandler) SetOfline() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-	}
-}
-
-func (cs *ChatHandler) UpdateOnline() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
 	}
 }

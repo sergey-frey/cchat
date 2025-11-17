@@ -60,7 +60,7 @@ func (s *Storage) NewChat(ctx context.Context, users []int64) (chatID int64, err
 	return chatID, nil
 }
 
-func (s *Storage) ListChats(ctx context.Context, currUser int64, username string, cursor int64, limit int) ([]models.Chat, *models.Cursor, error) {
+func (s *Storage) ListChats(ctx context.Context, currUser int64, username string, cursor int64, limit int) ([]models.Message, *models.Cursor, error) {
 	const op = "storage.chat.Chat"
 
 	tx, err := s.pool.Begin(ctx)
@@ -188,33 +188,11 @@ func (s *Storage) ListChats(ctx context.Context, currUser int64, username string
 		chats = append(chats, chat)
 	}
 
-	rcursor := &models.Cursor{}
+	// rcursor := &models.Cursor{}
 
 	if len(chats) == 0 {
 		return nil, nil, fmt.Errorf("%s: %w", op, storage.ErrUsersNotFound)
 	}
 
-	if len(chats) < 2 {
-		rcursor = &models.Cursor{
-			PrevCursor: chats[len(chats)-1].ID,
-		}
-		return chats, rcursor, nil
-	}
-
-	if len(chats) >= 2 {
-		if len(chats) <= limit {
-			rcursor = &models.Cursor{
-				PrevCursor: chats[len(chats)-1].ID,
-			}
-			return chats, rcursor, nil
-		}
-		if len(chats) > limit {
-			rcursor = &models.Cursor{
-				PrevCursor: chats[len(chats)-2].ID,
-				NextCursor: chats[len(chats)-1].ID,
-			}
-		}
-	}
-
-	return chats[:len(chats)-1], rcursor, nil
+	return nil, nil, nil
 }

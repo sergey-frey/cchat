@@ -2,9 +2,11 @@ package jwt
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/sergey-frey/cchat/server/chat-service/internal/domain/models"
 )
 
@@ -21,7 +23,7 @@ func NewPairTokens(user models.NormalizedUser) (string, string, error) {
 	accessToken := jwt.New(jwt.SigningMethodHS256)
 
 	claims := accessToken.Claims.(jwt.MapClaims)
-	claims["uid"] = user.ID
+	claims["uuid"] = user.UUID
 	claims["username"] = user.Username
 	claims["email"] = user.Email
 	claims["exp"] = time.Now().Add(accessDuration).Unix()
@@ -46,23 +48,31 @@ func NewPairTokens(user models.NormalizedUser) (string, string, error) {
 }
 
 func VerifyAccessToken(accessToken string, refreshToken string) (string, string, *models.NormalizedUser, error) {
-	accesstoken, _ := jwt.Parse(accessToken, func(token *jwt.Token) (any, error) {
+	claims := &jwt.MapClaims{}
+
+	accesstoken, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
 		return []byte("somesecret"), nil
 	})
 
-	claims := accesstoken.Claims.(jwt.MapClaims)
-	var user = models.NormalizedUser{
-		ID:       int64(claims["uid"].(float64)),
-		Username: claims["username"].(string),
-		Email:    claims["email"].(string),
+	if err != nil || !accesstoken.Valid {
+
+		user, userErr := extractUserFromClaims(*claims)
+		if userErr != nil {
+			return "", "", nil, ErrUserUnauthorized
+		}
+		
+		return VerifyRefreshToken(*user, refreshToken)
 	}
 
-	if !accesstoken.Valid {
-		newAccessToken, newRefreshToken, user, err := VerifyRefreshToken(user, refreshToken)
-		return newAccessToken, newRefreshToken, user, err
+	user, userErr := extractUserFromClaims(*claims)
+	if userErr != nil {
+		return "", "", nil, userErr
 	}
 
-	return "", "", &user, nil
+	return "", "", user, nil
 }
 
 func VerifyRefreshToken(user models.NormalizedUser, refreshToken string) (string, string, *models.NormalizedUser, error) {
@@ -74,15 +84,43 @@ func VerifyRefreshToken(user models.NormalizedUser, refreshToken string) (string
 	if err != nil {
 		return "", "", nil, err
 	}
-
+    
 	if !refreshtoken.Valid {
 		return "", "", nil, ErrUserUnauthorized
 	}
-
+    
 	newAccessToken, newRefreshToken, err := NewPairTokens(user)
 	if err != nil {
 		return "", "", nil, err
 	}
 
 	return newAccessToken, newRefreshToken, &user, nil
+}
+
+func extractUserFromClaims(claims jwt.MapClaims) (*models.NormalizedUser, error) {
+	uuidStr, ok := claims["uuid"].(string)
+	if !ok {
+		return nil, errors.New("missing or invalid 'uuid' in token claims")
+	}
+	
+	userUUID, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return nil, errors.New("failed to parse 'uuid' from token claims")
+	}
+
+	username, ok := claims["username"].(string)
+	if !ok {
+		return nil, errors.New("missing or invalid 'username' in token claims")
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok {
+		return nil, errors.New("missing or invalid 'email' in token claims")
+	}
+
+	return &models.NormalizedUser{
+		UUID:     userUUID,
+		Username: username,
+		Email:    email,
+	}, nil
 }

@@ -6,17 +6,18 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/sergey-frey/cchat/server/chat-service/internal/domain/models"
 	"github.com/sergey-frey/cchat/server/chat-service/internal/provider/storage"
 )
 
-func (s *Storage) NewChat(ctx context.Context, users []int64) (chatID int64, err error) {
+func (s *Storage) NewChat(ctx context.Context, chatName string, users []uuid.UUID) (chatID uuid.UUID, err error) {
 	const op = "storage.chat.NewChat"
 
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("%s: %w", op, err)
+		return uuid.Nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	defer func() {
@@ -38,7 +39,7 @@ func (s *Storage) NewChat(ctx context.Context, users []int64) (chatID int64, err
 
 	err = row.Scan(&chatID)
 	if err != nil {
-		return 0, fmt.Errorf("%s: %w", op, storage.ErrFailedToCreateChat)
+		return uuid.Nil, fmt.Errorf("%s: %w", op, storage.ErrFailedToCreateChat)
 	}
 
 	rows := make([][]interface{}, len(users))
@@ -54,13 +55,13 @@ func (s *Storage) NewChat(ctx context.Context, users []int64) (chatID int64, err
 	)
 
 	if err != nil {
-		return 0, fmt.Errorf("%s: %w", op, storage.ErrFailedToAddUsersInChat)
+		return uuid.Nil, fmt.Errorf("%s: %w", op, storage.ErrFailedToAddUsersInChat)
 	}
 
 	return chatID, nil
 }
 
-func (s *Storage) ListChats(ctx context.Context, currUser int64, username string, cursor int64, limit int) ([]models.Chat, *models.Cursor, error) {
+func (s *Storage) ListChats(ctx context.Context, currUser uuid.UUID, cursor uuid.UUID, limit int) ([]models.Chat, *models.Cursor, error) {
 	const op = "storage.chat.Chat"
 
 	tx, err := s.pool.Begin(ctx)

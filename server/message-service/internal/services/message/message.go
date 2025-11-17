@@ -13,7 +13,7 @@ import (
 
 type Message interface {
 	NewChat(ctx context.Context, users []int64) (chatID int64, err error)
-	ListChats(ctx context.Context, currUser int64, username string, cursor int64, limit int) (chats []models.Chat, cursors *models.Cursor, err error)
+	ListChats(ctx context.Context, currUser int64, username string, cursor int64, limit int) (chats []models.Message, cursors *models.Cursor, err error)
 }
 
 type MessageService struct {
@@ -49,7 +49,7 @@ func (ms *MessageService) NewChat(ctx context.Context, users []int64) (chatID in
 	return chatID, nil
 }
 
-func (ms *MessageService) ListChats(ctx context.Context, currUser int64, username string, cursor int64, limit int) (chats []models.Chat, cursors *models.Cursor, err error) {
+func (ms *MessageService) ListChats(ctx context.Context, currUser int64, username string, cursor int64, limit int) (chats []models.Message, cursors *models.Cursor, err error) {
 	const op = "services.message.ListChats"
 
 	log := ms.log.With(

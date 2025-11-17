@@ -68,6 +68,7 @@ func main() {
 	apiHttpClient := &http.Client{
 		Timeout: 5 * time.Second,
 	}
+	
 	userApiClient := userapi.NewClient(apiHttpClient, os.Getenv("USERS_SERVICE_1_URL"), log)
 
 	authService := authService.New(pool, userApiClient, log)

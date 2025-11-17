@@ -1,7 +1,9 @@
 package models
 
+import "github.com/google/uuid"
+
 type User struct {
-	ID       int64  `json:"id"`
+	UUID       uuid.UUID  `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email" validate:"required"`
 	PassHash []byte `json:"password" validate:"required"`
@@ -18,7 +20,7 @@ type LoginUser struct {
 }
 
 type UserInfo struct {
-	ID       int64  `json:"id"`
+	UUID       uuid.UUID  `json:"id"`
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Name     string `json:"name"`
@@ -33,14 +35,14 @@ type NewUserInfo struct {
 }
 
 type NormalizedUser struct {
-	ID       int64  `json:"id"`
+	UUID       uuid.UUID  `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 }
 
 func UserToNormalized(user *User) NormalizedUser {
 	return NormalizedUser{
-		ID:       user.ID,
+		UUID:       user.UUID,
 		Username: user.Username,
 		Email:    user.Email,
 	}
@@ -48,7 +50,7 @@ func UserToNormalized(user *User) NormalizedUser {
 
 func InfoToNormalized(info *UserInfo) NormalizedUser {
 	return NormalizedUser{
-		ID:       info.ID,
+		UUID:       info.UUID,
 		Username: info.Username,
 		Email:    info.Email,
 	}

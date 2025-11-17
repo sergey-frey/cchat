@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
-	_ "net/http/pprof"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -15,12 +17,13 @@ import (
 	_ "github.com/sergey-frey/cchat/server/chat-service/docs"
 	"github.com/sergey-frey/cchat/server/chat-service/internal/app"
 	"github.com/sergey-frey/cchat/server/chat-service/internal/config"
+	chatHandler "github.com/sergey-frey/cchat/server/chat-service/internal/http-server/handlers/chat"
 	"github.com/sergey-frey/cchat/server/chat-service/internal/http-server/middleware/cors"
 	"github.com/sergey-frey/cchat/server/chat-service/internal/http-server/middleware/jwtcheck"
 	"github.com/sergey-frey/cchat/server/chat-service/internal/lib/logger/slogpretty"
-	chatHandler "github.com/sergey-frey/cchat/server/chat-service/internal/http-server/handlers/chat"
-	chatService "github.com/sergey-frey/cchat/server/chat-service/internal/services/chat"
+	"github.com/sergey-frey/cchat/server/chat-service/internal/provider/api/userapi"
 	"github.com/sergey-frey/cchat/server/chat-service/internal/provider/storage/postgres"
+	chatService "github.com/sergey-frey/cchat/server/chat-service/internal/services/chat"
 	"github.com/swaggo/http-swagger/v2"
 )
 
@@ -62,7 +65,13 @@ func main() {
 		panic(err)
 	}
 
-	chatService := chatService.New(pool, log)
+	apiHttpClient := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	
+	userApiClient := userapi.NewClient(apiHttpClient, os.Getenv("USERS_SERVICE_1_URL"), log)
+
+	chatService := chatService.New(pool, userApiClient, log)
 	chatHandler := chatHandler.New(chatService, log)
 
 	migrator.NewMigration("postgres://user:password@chats-db:5432/chatsdb?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))

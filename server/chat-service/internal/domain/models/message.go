@@ -1,12 +1,16 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Message struct {
-	ID          int64     `json:"message_id"`
+	UUID          uuid.UUID     `json:"message_id"`
 	ContentType string    `json:"content_type"`
 	Content     string    `json:"content"`
 	Date        time.Time `json:"date"`
-	ChatID      int       `json:"chat_id"`
-	AuthorID    int       `json:"author_id"`
+	ChatID      uuid.UUID       `json:"chat_id"`
+	AuthorID    uuid.UUID `json:"author_id"`
 }

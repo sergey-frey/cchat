@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package message;
+
+// Импортируем стандартный тип Timestamp для работы с датой и временем
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/sergey-frey/cchat/protos/gen/go/message";
+
+// Определяем сервис MessageService
+service MessageService {
+  // RPC-метод для пакетного получения последних сообщений в нескольких чатах.
+  // Это то, что будет вызывать chats-service для эндпоинта /list.
+  rpc GetLastMessagesBatch(GetLastMessagesBatchRequest) returns (GetLastMessagesBatchResponse);
+}
+
+// Описание структуры одного сообщения
+message Message {
+  string message_id = 1;
+  string chat_id = 2;
+  string sender_id = 3;
+  string text = 4;
+  google.protobuf.Timestamp sent_at = 5;
+}
+
+// Сообщение-запрос для пакетного получения
+message GetLastMessagesBatchRequest {
+  repeated string chat_ids = 1;
+}
+
+// Сообщение-ответ с массивом найденных сообщений
+message GetLastMessagesBatchResponse {
+  repeated Message messages = 1;
+}

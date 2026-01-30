@@ -13,13 +13,11 @@ services:
 
     volumes:
       # Связываем локальную директорию с директорией в контейнере для hot reload'а
-      - ../client:/usr/app
+      - ../client:/usr/app:z
       - /usr/app/node_modules
 
     environment:
-      - MODE=develop
-
-    command: bash -c "npm install && npm run dev"
+      - MODE=develop 
 
   server:
     build:

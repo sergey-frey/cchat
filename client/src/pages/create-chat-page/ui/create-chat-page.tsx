@@ -128,7 +128,7 @@ export const CreateChatPage = () => {
         }}
       </SearchUsersList>
 
-      <ScrollTopButton onPress={handleScrollTopClick} className="z-[101]" />
+      <ScrollTopButton onPress={handleScrollTopClick} className="z-101" />
     </section>
   );
 };

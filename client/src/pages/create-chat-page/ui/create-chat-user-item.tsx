@@ -22,7 +22,7 @@ export const CreateChatUserItem = ({
       <UserItem
         className={cn(
           "py-1.5",
-          isSelected && "bg-gradient-to-r from-transparent to-slate-200",
+          isSelected && "bg-linear-to-r from-transparent to-slate-200",
         )}
       >
         <UserItem.Avatar isLoaded={!isShowPlaceholders} />

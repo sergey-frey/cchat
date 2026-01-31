@@ -27,7 +27,7 @@ export const AuthPage = () => {
         className={cn(
           "grid max-w-md mx-auto",
           "mt-10",
-          "md:grid-cols-2 md:max-w-2xl md:shadow",
+          "md:grid-cols-2 md:max-w-2xl md:shadow-sm",
         )}
       >
         <FormDecoration className="hidden md:block" />

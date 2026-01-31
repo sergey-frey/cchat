@@ -12,7 +12,7 @@ export const Navigation = ({ chatTitle }: NavigationProps) => {
   return (
     <nav
       className={cn(
-        "sticky top-0 shadow px-3 py-2 bg-white rounded-b-medium",
+        "sticky top-0 shadow-sm px-3 py-2 bg-white rounded-b-medium",
         "grid grid-cols-3 items-center",
       )}
     >

@@ -22,7 +22,7 @@ export const MessageBubble = ({
       {...props}
       className={cn(
         "px-3 py-1.5 rounded-md bg-slate-500 text-gray-100 w-fit",
-        "break-words overflow-hidden",
+        "wrap-break-word overflow-hidden",
         isOwn && "bg-primary-400 text-white",
         isBlockStart && "rounded-t-xl",
         isBlockEnd && "rounded-b-xl",

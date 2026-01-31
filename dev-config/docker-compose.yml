@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   client:
     build:
@@ -11,35 +13,56 @@ services:
 
     volumes:
       # Связываем локальную директорию с директорией в контейнере для hot reload'а
-      - ../client:/usr/app
+      - ../client:/usr/app:z
       - /usr/app/node_modules
 
     environment:
-      - MODE=develop
+      - MODE=develop 
 
-    command: bash -c "npm install && npm run dev"
-  cchat-server-app:
+  server:
     build:
       context: ../server
       dockerfile: '../dev-config/Dockerfile.server'
-    # Bash в контейнере может не распознавать wait-for-db.sh из-за CRLF
-    # В таком случае можно изменить формат - `dos2unix ../server/wait-for-db.sh`
-    command: ./wait-for-db.sh psql ./cchat-server-app
     environment:
-      - PG_DB_PASSWORD=qwerty
-      - REDIS_DB_PASSWORD=admin12345
+      DATABASE_URL: postgres://user:password@postgres:5432/mydb?sslmode=disable
+      POSTGRES_DB: mydb        
+      POSTGRES_USER: user      
+      POSTGRES_PASSWORD: password
+      DB_HOST: postgres 
     ports:
       - 8040:8040
     depends_on:
-      - psql
-      - redis
-  psql:
-    restart: always
-    image: postgres:latest
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backups:/root/backups:z
+        
+  postgres:
+    image: postgres:15-alpine
     environment:
-      - POSTGRES_PASSWORD=qwerty
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
     ports:
       - 5443:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d mydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate
+    volumes:
+      - ../server/migrations:/migrations:z
+    command:
+      - -path=/migrations
+      - -database=postgres://user:password@postgres:5432/mydb?sslmode=disable
+      - up
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   redis:
     image: redis:latest
     restart: always

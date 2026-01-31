@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/sergey-frey/cchat/cmd/migrator"
+	// "github.com/sergey-frey/cchat/cmd/migrator"
 	_ "github.com/sergey-frey/cchat/docs"
 	"github.com/sergey-frey/cchat/internal/app"
 	"github.com/sergey-frey/cchat/internal/config"
@@ -46,6 +46,7 @@ const (
 	envProd  = "prod"
 )
 
+
 func main() {
 	cfg := config.MustLoad()
 
@@ -80,7 +81,7 @@ func main() {
 	chatService := chatService.New(pool, redisPool, log)
 	chatHandler := chatHandler.New(chatService, redisPool, log)
 
-	migrator.NewMigration("postgres://postgres:qwerty@psql:5432/postgres?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
+	// migrator.NewMigration("postgres://user:password@db:5432/mydb?sslmode=disable", os.Getenv("MIGRATIONS_PATH"))
 	
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8040/swagger/doc.json"), //The url pointing to API definition

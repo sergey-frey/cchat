@@ -4,10 +4,10 @@ token_ttl: 1h
 client_domen: "http://localhost:5173"
 
 psql:
-  username: "postgres"
-  host: "psql"
+  username: "user"
+  host: "postgres"
   port: "5432"
-  dbname: "postgres"
+  dbname: "mydb"
   sslmode: "disable"
 
 redis:

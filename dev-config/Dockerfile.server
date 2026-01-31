@@ -1,21 +1,47 @@
-FROM golang:latest
+FROM golang:1.24.9-alpine AS builder
 
-RUN go version
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
 
 COPY ./ ./
 
-#install psql
-RUN apt-get update
-RUN apt-get -y install postgresql-client
+# RUN apt-get update
+# RUN apt-get -y install postgresql-client
 
-RUN apt-get install dos2unix
-RUN apt-get -y install redis
+# RUN apt-get install dos2unix
 
-#make wait-for-postgres.sh executable
-RUN chmod +x ./wait-for-db.sh
-RUN dos2unix ./wait-for-db.sh
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cchat-server-app ./cmd/cchat/main.go
 
-#build go app
-RUN go mod download
-RUN go build -o cchat-server-app ./cmd/cchat/main.go
+FROM alpine:latest
+
+WORKDIR /app
+
+RUN apk add --no-cache postgresql-client
+
+COPY --from=builder /src/cchat-server-app .
+COPY --from=builder /src/.env .
+COPY --from=builder /src/config/local.yaml .
+
 CMD ["./cchat-server-app"]
+
+
+
+
+
+
+
+# 
+
+
+
+# WORKDIR /app
+
+# RUN apk add --no-cache postgresql-client
+
+# COPY --from=builder /src/bank .
+
+# EXPOSE 3030
+
+# CMD ["./bank"]

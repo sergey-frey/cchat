@@ -1,11 +1,34 @@
 import { Dispatch, SetStateAction, useState } from "react";
 
 export type UseArrayStateMethods<T> = {
+  /**
+   * Set the state of the array
+   */
   setState: Dispatch<SetStateAction<T[]>>;
+
+  /**
+   * Push the item to the array
+   */
   push: (item: T) => void;
+
+  /**
+   * Push the item to the array if it is not already in the array
+   */
   pushUnique: (item: T) => void;
+
+  /**
+   * Remove the item from the array
+   */
   remove: (deleteItem: T) => void;
+
+  /**
+   * Remove the last item from the array
+   */
   pop: () => void;
+
+  /**
+   * Clear the array
+   */
   clear: () => void;
 };
 
@@ -21,6 +44,7 @@ export const useArrayState = <T>(
   const remove = (deleteItem: T) => {
     setState((prev) => prev.filter((item) => item !== deleteItem));
   };
+
   const pushUnique = (item: T) => {
     setState((prev) => (prev.includes(item) ? prev : [...prev, item]));
   };

@@ -9,8 +9,9 @@ import { Link } from "wouter";
 import { IUser } from "@/entities/user";
 import { NavigationOriginState } from "@/shared/types/navigation";
 import { cn } from "@/shared/utils/cn";
-import { useArrayState } from "@/shared/utils/use-array-state";
-import { useLocationState } from "@/shared/utils/use-location-state";
+import { useArrayState, useLocationState } from "@/shared/utils/hooks";
+
+import { CREATE_CHAT_SEARCH_LIMIT } from "../constants";
 import { CREATE_CHAT_PAGE_ANIMATIONS } from "../constants/animations";
 import { useCreateChat } from "../model/use-create-chat";
 import { useCreateChatHandlers } from "../model/use-create-chat-handlers";
@@ -19,7 +20,6 @@ import { ChatMembers } from "./chat-members";
 import { CreateChatUserItem } from "./create-chat-user-item";
 import { ScrollTopButton } from "./scroll-top-button";
 import { SearchUsersList } from "./search-users-list";
-import { CREATE_CHAT_SEARCH_LIMIT } from "../constants";
 
 export const CreateChatPage = () => {
   const { state } = useLocationState<NavigationOriginState>();
@@ -33,19 +33,23 @@ export const CreateChatPage = () => {
     isShowCreateChatButton,
     fetchUsersError,
     isShowPlaceholders,
-    isShowScrollDivider,
+    isAppContainerHasScroll,
     isChatMembersDirty,
     paginationTriggerRef,
     debouncedRefetchUsers,
   } = useCreateChat({ search, chatMembers });
 
-  const { handleScrollTopClick, handleSearchChange, handleUserClick } =
-    useCreateChatHandlers({
-      setSearch,
-      debouncedRefetchUsers,
-      chatMembers,
-      chatMembersMethods,
-    });
+  const {
+    handleScrollTopClick,
+    handleSearchChange,
+    handleUserClick,
+    handleClickCreateChatButton,
+  } = useCreateChatHandlers({
+    setSearch,
+    debouncedRefetchUsers,
+    chatMembers,
+    chatMembersMethods,
+  });
 
   return (
     <section className="p-4 pt-0 relative">
@@ -53,7 +57,7 @@ export const CreateChatPage = () => {
         className={cn(
           "pt-4 pb-4 sticky top-0 z-10",
           "bg-white border-b border-transparent transition-colors",
-          isShowScrollDivider && "border-foreground-300",
+          isAppContainerHasScroll && "border-foreground-300",
           isChatMembersDirty && "pb-2 border-foreground-300",
         )}
         {...CREATE_CHAT_PAGE_ANIMATIONS.HEADER}
@@ -84,6 +88,7 @@ export const CreateChatPage = () => {
                     color="primary"
                     className="rounded-full"
                     isIconOnly
+                    onPress={handleClickCreateChatButton}
                   >
                     <ArrowRightIcon className="w-5 h-5" />
                   </Button>
@@ -128,7 +133,9 @@ export const CreateChatPage = () => {
         }}
       </SearchUsersList>
 
-      <ScrollTopButton onPress={handleScrollTopClick} className="z-101" />
+      {isAppContainerHasScroll && (
+        <ScrollTopButton onPress={handleScrollTopClick} className="z-101" />
+      )}
     </section>
   );
 };

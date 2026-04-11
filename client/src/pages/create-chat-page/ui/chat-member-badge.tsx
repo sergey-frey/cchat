@@ -13,7 +13,7 @@ type ChatMemberBadgeProps = {
 export const ChatMemberBadge = ({ user, onClick }: ChatMemberBadgeProps) => {
   return (
     <motion.button
-      className="inline"
+      className="inline cursor-pointer"
       onClick={onClick}
       {...CREATE_CHAT_PAGE_ANIMATIONS.CHAT_MEMBER_BADGE}
     >

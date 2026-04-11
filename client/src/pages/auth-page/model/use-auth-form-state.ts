@@ -1,4 +1,4 @@
-import { useSearchParams } from "@/shared/utils/use-search-params";
+import { useSearchParams } from "@/shared/utils/hooks";
 import { AuthFormState } from "../types";
 
 const formTitle: Record<AuthFormState, string> = {

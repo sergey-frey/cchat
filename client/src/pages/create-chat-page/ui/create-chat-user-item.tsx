@@ -18,7 +18,11 @@ export const CreateChatUserItem = ({
   onClick,
 }: CreateChatUserItemProps) => {
   return (
-    <button key={user.id} className="text-start" onClick={() => onClick(user)}>
+    <button
+      key={user.id}
+      className="text-start cursor-pointer"
+      onClick={() => onClick(user)}
+    >
       <UserItem
         className={cn(
           "py-1.5",

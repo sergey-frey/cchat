@@ -9,24 +9,6 @@ export const useChatsQuery = (search?: string) => {
   return useQuery<IResponse<IChatPreview[]>>({
     queryKey: ["chats", search],
     queryFn: () => {
-      //   return {
-      //     data: [
-      //       {
-      //         id: "1",
-      //         users: [
-      //           {
-      //             username: "username_1",
-      //             name: "User1",
-      //           },
-      //           {
-      //             username: "username_2",
-      //             name: "User2",
-      //           },
-      //         ].map((user, i) => ({ id: i.toString(), ...user })),
-      //         messages: [],
-      //       },
-      //     ],
-      //   };
       return chatsApi
         .get("preview", { searchParams: { ...(search ? { search } : {}) } })
         .json();
@@ -34,10 +16,10 @@ export const useChatsQuery = (search?: string) => {
   });
 };
 
-export const useCreateChatMutation = ({ onSettled }: QueryHooks) => {
+export const useCreateChatMutation = ({ onSettled }: QueryHooks = {}) => {
   return useMutation({
     mutationFn: ({ users }: CreateChatDto) => {
-      return chatsApi.post("/", { json: { users } }).json();
+      return chatsApi.post("new", { json: { users } }).json();
     },
     mutationKey: ["createChat"],
     onSettled: () => {

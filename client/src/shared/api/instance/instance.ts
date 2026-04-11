@@ -22,7 +22,7 @@ export const authApi = api.extend({
 });
 
 export const chatsApi = api.extend({
-  prefixUrl: urlJoin(baseUrl, "chats"),
+  prefixUrl: urlJoin(baseUrl, "chat"),
 });
 
 export const userApi = api.extend({

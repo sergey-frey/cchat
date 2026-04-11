@@ -1,9 +1,10 @@
+import { useCreateChatMutation } from "@/entities/chats";
 import { IUser } from "@/entities/user";
 import {
   containerRefSelector,
   useAppContainer,
 } from "@/shared/utils/app-container";
-import { UseArrayStateMethods } from "@/shared/utils/use-array-state";
+import { UseArrayStateMethods } from "@/shared/utils/hooks";
 import { Dispatch, SetStateAction } from "react";
 
 type UseCreateChatHandlersOptions = {
@@ -21,6 +22,8 @@ export const useCreateChatHandlers = ({
 }: UseCreateChatHandlersOptions) => {
   const containerRef = useAppContainer(containerRefSelector);
 
+  const createChatMutation = useCreateChatMutation();
+
   const handleSearchChange = (value: string) => {
     setSearch(value);
     debouncedRefetchUsers();
@@ -32,12 +35,24 @@ export const useCreateChatHandlers = ({
   };
 
   const handleUserClick = (user: IUser) => {
-    if (chatMembers.includes(user)) {
+    if (chatMembers.indexOf(user) !== -1) {
       chatMembersMethods.remove(user);
     } else {
       chatMembersMethods.pushUnique(user);
     }
   };
 
-  return { handleSearchChange, handleScrollTopClick, handleUserClick };
+  const handleClickCreateChatButton = async () => {
+    // TODO: navigate to chat page
+    await createChatMutation.mutateAsync({
+      users: chatMembers.map((user) => user.id),
+    });
+  };
+
+  return {
+    handleSearchChange,
+    handleScrollTopClick,
+    handleUserClick,
+    handleClickCreateChatButton,
+  };
 };

@@ -1,11 +1,11 @@
 import { IUser, useSearchUsersQuery } from "@/entities/user";
-import { useIntersection } from "@/shared/utils/use-intersection";
+import { useAppContainerScroll } from "@/shared/utils/app-container";
+import { useIntersection } from "@/shared/utils/hooks";
 import { Spinner } from "@heroui/spinner";
 import debounce from "debounce";
 import { useCallback } from "react";
 import { CREATE_CHAT_SEARCH_LIMIT } from "../constants";
 import { PLACEHOLDER_USERS } from "../constants/placeholder";
-import { useAppContainerScroll } from "@/shared/utils/app-container";
 
 type UseCreateChatOptions = {
   search: string;
@@ -58,7 +58,7 @@ export const useCreateChat = ({
 
   const isShowPlaceholders = isSearchPlaceholderData || isSearchRefetching;
 
-  const isShowScrollDivider = scroll > 0;
+  const isAppContainerHasScroll = scroll > 0;
 
   const isChatMembersDirty = chatMembers.length > 0 && !isSearchPlaceholderData;
 
@@ -71,7 +71,7 @@ export const useCreateChat = ({
     isShowCreateChatButton,
     fetchUsersError,
     isShowPlaceholders,
-    isShowScrollDivider,
+    isAppContainerHasScroll,
     isChatMembersDirty,
   };
 };
